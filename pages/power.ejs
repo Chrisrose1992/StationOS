@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>StationOS Power</title>
+    <link rel="stylesheet" href="/css/stationos.css">
+</head>
+<body>
+    <%- include('header') %>
+
+    <div class="layout">
+        <%- include('sidenav') %>
+
+        <main>
+            <div class="power-heading">
+                <div>
+                    <p class="eyebrow">StationOS</p>
+                    <h1>Power Control</h1>
+                </div>
+                <div class="system-pill" id="power-state">Waiting for data</div>
+            </div>
+
+            <section class="power-layout">
+                <article class="panel battery-panel" id="battery-panel">
+                    <div class="panel-header">Battery Bank</div>
+                    <div class="panel-body">
+                        <div class="battery-readout">
+                            <div>
+                                <div class="metric" id="battery-charge"><%= data.battery_charge || "0%" %></div>
+                                <div class="label" id="battery-count"><%= data.battery_count || 0 %> batteries online</div>
+                            </div>
+                            <div class="battery-icon" aria-hidden="true">
+                                <div id="battery-fill"></div>
+                            </div>
+                        </div>
+
+                        <div class="power-row">
+                            <span>Status</span>
+                            <strong id="battery-status">Offline</strong>
+                        </div>
+                        <div class="power-row">
+                            <span>Error</span>
+                            <strong id="battery-error">None</strong>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="panel" id="grid-panel">
+                    <div class="panel-header">Grid Load</div>
+                    <div class="panel-body power-stack">
+                        <div class="power-row">
+                            <span>Actual Input</span>
+                            <strong id="power-in"><%= data.power_actual_in || "0 W" %></strong>
+                        </div>
+                        <div class="power-row">
+                            <span>Consumption</span>
+                            <strong id="power-out"><%= data.power_actual_out || "0 W" %></strong>
+                        </div>
+                        <div class="power-row">
+                            <span>Required</span>
+                            <strong id="power-required"><%= data.power_required || "0 W" %></strong>
+                        </div>
+                        <div class="power-row">
+                            <span>Net</span>
+                            <strong id="power-net">0 W</strong>
+                        </div>
+                        <div class="power-row">
+                            <span>Automation</span>
+                            <strong id="generation-command">Waiting</strong>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <h2 class="page-title">Generation</h2>
+            <section class="generator-grid">
+                <article class="generator-card" id="wind-card">
+                    <div class="generator-top">
+                        <span>Wind Turbines</span>
+                        <strong id="wind-status">Offline</strong>
+                    </div>
+                    <div class="generator-value" id="wind-power"><%= data.windTurbine_power || "0 W" %></div>
+                </article>
+
+                <article class="generator-card" id="gfg-card">
+                    <div class="generator-top">
+                        <span>Gas Fuel Generators</span>
+                        <strong id="gfg-count"><%= data.gfg_count || 0 %> units</strong>
+                    </div>
+                    <div class="generator-value" id="gfg-power"><%= data.gfg_power || "0 W" %></div>
+                    <div class="generator-detail">
+                        <span>Error</span>
+                        <strong id="gfg-error">None</strong>
+                    </div>
+                    <div class="generator-detail">
+                        <span>Gas</span>
+                        <strong id="gfg-mols">0 mol</strong>
+                    </div>
+                </article>
+
+                <article class="generator-card" id="sfg-card">
+                    <div class="generator-top">
+                        <span>Solid Fuel Generators</span>
+                        <strong id="sfg-count"><%= data.sfg_count || 0 %> units</strong>
+                    </div>
+                    <div class="generator-value" id="sfg-power"><%= data.sfg_power || "0 W" %></div>
+                    <div class="generator-detail">
+                        <span>Error</span>
+                        <strong id="sfg-error">None</strong>
+                    </div>
+                    <div class="generator-detail">
+                        <span>Coal</span>
+                        <strong id="sfg-coal">0 / 0</strong>
+                    </div>
+                </article>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/stationos.js"></script>
+    <script>
+        function numericPercent(value) {
+            const number = Number(String(value || "0").replace("%", ""));
+
+            if (!Number.isFinite(number)) {
+                return 0;
+            }
+
+            return Math.max(0, Math.min(100, number));
+        }
+
+        function powerNumber(value) {
+            const text = String(value || "0 W");
+            const number = Number.parseFloat(text);
+
+            if (!Number.isFinite(number)) {
+                return 0;
+            }
+
+            if (text.includes("MW")) {
+                return number * 1000000;
+            }
+
+            if (text.includes("kW")) {
+                return number * 1000;
+            }
+
+            return number;
+        }
+
+        function updatePowerState(power) {
+            const charge = numericPercent(power.battery_charge);
+            const input = Number(power.power_actual_in_w ?? powerNumber(power.power_actual_in));
+            const required = Number(power.power_required_out_w ?? powerNumber(power.power_required));
+            const net = Number(power.net_power_w ?? input - required);
+            const isOnline = Number(power.battery_count || 0) > 0;
+
+            setText("battery-charge", `${charge.toFixed(0)}%`);
+            setText("battery-count", `${power.battery_count || 0} batteries online`);
+            setText("battery-status", isOnline ? "Online" : "Offline");
+            setText("battery-error", power.battery_error ? "Error" : "None");
+            setText("power-state", net >= 0 ? "Grid stable" : "Power deficit");
+            setText("power-in", power.power_actual_in);
+            setText("power-out", power.power_actual_out);
+            setText("power-required", power.power_required);
+            setText("power-net", formatPowerText(net));
+            setText("generation-command", power.generation_command
+                ? `${power.generation_command.target}: ${power.generation_command.reason}`
+                : "-"
+            );
+            setText("wind-power", power.windTurbine_power);
+            setText("gfg-power", power.gfg_power);
+            setText("sfg-power", power.sfg_power);
+            setText("gfg-count", `${power.gfg_count || 0} units`);
+            setText("sfg-count", `${power.sfg_count || 0} units`);
+            setText("wind-status", powerNumber(power.windTurbine_power) > 0 ? "Online" : "Offline");
+            setText("gfg-error", power.gfg_error ? "Error" : "None");
+            setText("sfg-error", power.sfg_error ? "Error" : "None");
+            setText("gfg-mols", power.gfg_mols_label || `${power.gfg_mols || 0} mol`);
+            setText("sfg-coal", `${power.sfg_coal_count || 0} / ${power.sfg_coal_capacity || 0}`);
+
+            document.getElementById("battery-fill").style.height = `${charge}%`;
+            setStateClass(document.getElementById("battery-panel"), power.battery_error ? "danger" : batteryState(charge));
+            setStateClass(document.getElementById("grid-panel"), net < 0 ? "danger" : "ok");
+            setStateClass(document.getElementById("power-net"), net < 0 ? "danger" : "ok");
+            setStateClass(document.getElementById("power-state"), net < 0 ? "danger" : "ok");
+            setStateClass(document.getElementById("gfg-card"), power.gfg_error ? "danger" : generatorState(power.gfg_power_w));
+            setStateClass(document.getElementById("sfg-card"), power.sfg_error ? "danger" : generatorState(power.sfg_power_w));
+            setStateClass(document.getElementById("wind-card"), generatorState(power.wind_power_w));
+        }
+
+        function setStateClass(element, state) {
+            if (!element) {
+                return;
+            }
+
+            element.classList.remove("state-ok", "state-warn", "state-danger", "ok", "warn", "danger");
+            element.classList.add(`state-${state}`);
+
+            if (element.id === "power-net" || element.id === "power-state") {
+                element.classList.add(state);
+            }
+        }
+
+        function batteryState(charge) {
+            if (charge <= 20) {
+                return "danger";
+            }
+
+            if (charge <= 45) {
+                return "warn";
+            }
+
+            return "ok";
+        }
+
+        function generatorState(watts) {
+            return Number(watts || 0) > 0 ? "ok" : "warn";
+        }
+
+        function formatPowerText(watts) {
+            const sign = watts > 0 ? "+" : "";
+            const absolute = Math.abs(watts);
+
+            if (absolute >= 1000000) {
+                return `${sign}${(watts / 1000000).toFixed(2)} MW`;
+            }
+
+            if (absolute >= 1000) {
+                return `${sign}${(watts / 1000).toFixed(2)} kW`;
+            }
+
+            return `${sign}${watts.toFixed(0)} W`;
+        }
+
+        startPageLoader(async () => {
+            const station = await fetchJson("/api/station");
+            const power = {
+                ...station.power_monitor,
+                generation_command: station.generation_command,
+            };
+
+            updatePowerState(power);
+        });
+    </script>
+</body>
+</html>

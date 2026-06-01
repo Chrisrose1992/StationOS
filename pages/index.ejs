@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>StationOS Overview</title>
+    <link rel="stylesheet" href="/css/stationos.css">
+</head>
+<body>
+    <header>
+        <a class="brand" href="/">StationOS</a>
+        <div class="status" id="status">Connecting...</div>
+    </header>
+
+    <div class="layout">
+        <%- include('sidenav') %>
+
+        <main>
+            <h1 class="page-title">Overview</h1>
+
+            <section class="grid">
+                <article class="panel">
+                    <div class="panel-header">Battery</div>
+                    <div class="panel-body">
+                        <div class="metric" id="battery-charge">-</div>
+                        <div class="label" id="battery-count">Batteries</div>
+                    </div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel-header">Weather</div>
+                    <div class="panel-body">
+                        <div class="metric" id="weather-status">-</div>
+                        <div class="label" id="day-night">Day cycle</div>
+                    </div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel-header">Hallway</div>
+                    <div class="panel-body">
+                        <div class="metric" id="hallway-room">-</div>
+                        <div class="label" id="hallway-occupied">Occupied</div>
+                    </div>
+                </article>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/stationos.js"></script>
+    <script>
+        startPageLoader(async () => {
+            const station = await fetchJson("/api/station");
+
+            setText("battery-charge", `${Number(station.power_monitor.battery_charge || 0).toFixed(0)}%`);
+            setText("battery-count", `${station.power_monitor.battery_count || 0} batteries`);
+            setText("weather-status", station.weather.weather_status);
+            setText("day-night", station.weather.isNight);
+            setText("hallway-room", station.hallway.room);
+            setText("hallway-occupied", station.hallway.occupied ? "Occupied" : "Clear");
+        });
+    </script>
+</body>
+</html>
