@@ -6,6 +6,14 @@ Using the Stationeers HTTP API, IC scripts export live telemetry to an Express b
 
 StationOS is designed to function as a station-wide operations console, providing real-time visibility into critical systems such as power generation, weather conditions, atmospheric data, room status, and automation controls.
 
+## Screenshots
+
+![StationOS dashboard](<Screenshots/Screenshot 2026-05-31 090425.png>)
+
+![StationOS power monitoring](<Screenshots/Screenshot 2026-05-31 195950.png>)
+
+![StationOS weather monitoring](<Screenshots/Screenshot 2026-05-31 200010.png>)
+
 ## Features
 
 ### Power Management
