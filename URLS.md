@@ -13,10 +13,12 @@ http://127.0.0.1:4000
 | Overview | `/` |
 | Base Status | `/base-status` |
 | Power Control | `/power` |
-| Power Banks | `/power-banks` |
+| Power Banks | `/power` |
 | Workshop | `/workshop` |
 | Weather | `/weather` |
 | Hallway | `/hallway` |
+
+`/power-banks` is still available as a standalone battery-bank view, but the main power-bank cards now live on `/power`.
 
 ## GET API
 

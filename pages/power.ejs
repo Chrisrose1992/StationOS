@@ -73,6 +73,13 @@
                 </article>
             </section>
 
+            <h2 class="page-title">Power Banks</h2>
+            <section class="device-grid power-bank-grid" id="bank-grid">
+                <article class="panel">
+                    <div class="panel-body">Waiting for battery bank telemetry.</div>
+                </article>
+            </section>
+
             <h2 class="page-title">Generation</h2>
             <section class="generator-grid">
                 <article class="generator-card" id="wind-card">
@@ -190,6 +197,60 @@
             setStateClass(document.getElementById("wind-card"), generatorState(power.wind_power_w));
         }
 
+        function updatePowerBanks(banks) {
+            const grid = document.getElementById("bank-grid");
+
+            if (!grid) {
+                return;
+            }
+
+            grid.innerHTML = banks.length
+                ? banks.map(renderPowerBank).join("")
+                : `<article class="panel"><div class="panel-body">Waiting for battery bank telemetry.</div></article>`;
+        }
+
+        function renderPowerBank(bank) {
+            const charge = Math.max(0, Math.min(100, Number(bank.ratio || 0) * 100));
+            const state = bankState(bank, charge);
+
+            return `
+                <article class="device-card state-${state}">
+                    <div class="device-card-top">
+                        <div>
+                            <strong>${escapeHtml(bank.name || bank.id)}</strong>
+                            <span>${escapeHtml(bank.id)}</span>
+                        </div>
+                        <em class="${state}">${bank.online ? "Online" : "Offline"}</em>
+                    </div>
+                    <div class="battery-meter">
+                        <div style="width: ${charge}%"></div>
+                    </div>
+                    <div class="device-metric">${escapeHtml(bank.charge || `${charge.toFixed(0)}%`)}</div>
+                    <div class="device-rows">
+                        <div><span>Output</span><strong>${escapeHtml(bank.actual_power_out || "0 W")}</strong></div>
+                        <div><span>Potential In</span><strong>${escapeHtml(bank.potential_power_in || "0 W")}</strong></div>
+                        <div><span>Battery Count</span><strong>${Number(bank.count || 0)}</strong></div>
+                    </div>
+                </article>
+            `;
+        }
+
+        function bankState(bank, charge) {
+            if (!bank.online) {
+                return "danger";
+            }
+
+            if (charge <= 20) {
+                return "danger";
+            }
+
+            if (charge <= 45) {
+                return "warn";
+            }
+
+            return "ok";
+        }
+
         function setStateClass(element, state) {
             if (!element) {
                 return;
@@ -240,8 +301,10 @@
                 ...station.power_monitor,
                 generation_command: station.generation_command,
             };
+            const bankData = await fetchJson("/api/power/banks");
 
             updatePowerState(power);
+            updatePowerBanks(bankData.banks || []);
         });
     </script>
 </body>
