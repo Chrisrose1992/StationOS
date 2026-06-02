@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>StationOS Workshop</title>
+    <link rel="stylesheet" href="/css/stationos.css">
+</head>
+<body>
+    <%- include('header') %>
+
+    <div class="layout">
+        <%- include('sidenav') %>
+
+        <main>
+            <div class="power-heading">
+                <div>
+                    <p class="eyebrow">StationOS</p>
+                    <h1>Workshop</h1>
+                </div>
+                <div class="system-pill" id="printer-count">Waiting for data</div>
+            </div>
+
+            <section class="device-grid" id="printer-grid"></section>
+        </main>
+    </div>
+
+    <script src="/js/stationos.js"></script>
+    <script>
+        function printerState(printer) {
+            if (!printer.online) {
+                return "danger";
+            }
+
+            if (printer.active) {
+                return "ok";
+            }
+
+            return "warn";
+        }
+
+        function renderPrinter(printer) {
+            const state = printerState(printer);
+            const target = Number(printer.print_amount || 0);
+            const printed = Number(printer.printed_count || 0);
+            const percent = target > 0 ? Math.max(0, Math.min(100, (printed / target) * 100)) : 0;
+
+            return `
+                <article class="device-card state-${state}">
+                    <div class="device-card-top">
+                        <div>
+                            <strong>${escapeHtml(printer.name || printer.id)}</strong>
+                            <span>${escapeHtml(printer.type || "printer")}</span>
+                        </div>
+                        <em class="${state}">${printer.active ? "Printing" : printer.online ? "Idle" : "Offline"}</em>
+                    </div>
+                    <div class="device-metric">${escapeHtml(printer.recipe_name || "No recipe")}</div>
+                    <div class="battery-meter">
+                        <div style="width: ${percent}%"></div>
+                    </div>
+                    <div class="device-rows">
+                        <div><span>Progress</span><strong>${printed} / ${target}</strong></div>
+                        <div><span>Completion</span><strong>${(Number(printer.completion || 0) * 100).toFixed(0)}%</strong></div>
+                        <div><span>Recipe Hash</span><strong>${Number(printer.recipe_hash || 0)}</strong></div>
+                    </div>
+                </article>
+            `;
+        }
+
+        startPageLoader(async () => {
+            const data = await fetchJson("/api/workshop/printers");
+            const printers = data.printers || [];
+
+            setText("printer-count", `${printers.length} printers`);
+            document.getElementById("printer-grid").innerHTML = printers.length
+                ? printers.map(renderPrinter).join("")
+                : `<article class="panel"><div class="panel-body">Waiting for workshop printer telemetry.</div></article>`;
+        });
+    </script>
+</body>
+</html>

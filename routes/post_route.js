@@ -2,6 +2,7 @@ const router = require("express").Router();
 const {
     stationState,
     formatPower,
+    formatPercent,
     updatePowerNet,
     updateGenerationCommand,
     kelvinToCelsius,
@@ -24,6 +25,18 @@ router.get("/hallway", (req, res) => {
     res.render("hallway");
 });
 
+router.get("/base-status", (req, res) => {
+    res.render("base-status");
+});
+
+router.get("/power-banks", (req, res) => {
+    res.render("power-banks");
+});
+
+router.get("/workshop", (req, res) => {
+    res.render("workshop");
+});
+
 router.get("/api/station", (req, res) => {
     res.json(stationState);
 });
@@ -38,6 +51,95 @@ router.get("/api/weather", (req, res) => {
 
 router.get("/api/hallway", (req, res) => {
     res.json(stationState.hallway);
+});
+
+router.get("/api/base-status", (req, res) => {
+    res.json(stationState.base_status);
+});
+
+router.get("/api/power/banks", (req, res) => {
+    res.json({
+        banks: Object.values(stationState.power_banks),
+    });
+});
+
+router.get("/api/workshop/printers", (req, res) => {
+    res.json({
+        printers: Object.values(stationState.workshop.printers),
+    });
+});
+
+router.post("/api/base-status", (req, res) => {
+    const data = req.body;
+    const now = new Date().toISOString();
+
+    stationState.base_status = {
+        base_id: String(data.base_id || data.id || stationState.base_status.base_id || "base"),
+        last_seen: now,
+        version: String(data.version || ""),
+        world_name: String(data.world_name || data.world || ""),
+        session_id: String(data.session_id || ""),
+        online: data.online === undefined ? true : Boolean(data.online),
+    };
+
+    res.status(200).json(stationState.base_status);
+});
+
+router.post("/api/power/banks", (req, res) => {
+    const banks = Array.isArray(req.body.banks) ? req.body.banks : [];
+    const now = new Date().toISOString();
+
+    banks.forEach((bank, index) => {
+        const id = String(bank.id || bank.bank_id || `bank_${index + 1}`);
+        const ratio = Number(bank.ratio ?? bank.battery_ratio ?? 0);
+        const actualPowerOutW = Number(bank.actual_power_out_w ?? bank.power_actual_out_w ?? 0);
+        const potentialPowerInW = Number(bank.potential_power_in_w ?? bank.power_potential_in_w ?? bank.power_actual_in_w ?? 0);
+
+        stationState.power_banks[id] = {
+            id,
+            name: String(bank.name || id),
+            ratio,
+            charge: formatPercent(ratio),
+            actual_power_out_w: actualPowerOutW,
+            actual_power_out: formatPower(actualPowerOutW),
+            potential_power_in_w: potentialPowerInW,
+            potential_power_in: formatPower(potentialPowerInW),
+            online: bank.online === undefined ? true : Boolean(bank.online),
+            count: Number(bank.count || bank.battery_count || 0),
+            last_seen: now,
+        };
+    });
+
+    res.status(200).json({
+        banks: Object.values(stationState.power_banks),
+    });
+});
+
+router.post("/api/workshop/printers", (req, res) => {
+    const printers = Array.isArray(req.body.printers) ? req.body.printers : [];
+    const now = new Date().toISOString();
+
+    printers.forEach((printer, index) => {
+        const id = String(printer.id || printer.printer_id || `printer_${index + 1}`);
+
+        stationState.workshop.printers[id] = {
+            id,
+            name: String(printer.name || id),
+            type: String(printer.type || "printer"),
+            online: printer.online === undefined ? true : Boolean(printer.online),
+            active: Boolean(printer.active),
+            recipe_hash: Number(printer.recipe_hash || 0),
+            recipe_name: printer.recipe_name || null,
+            print_amount: Number(printer.print_amount || 0),
+            printed_count: Number(printer.printed_count || 0),
+            completion: Number(printer.completion || 0),
+            last_seen: now,
+        };
+    });
+
+    res.status(200).json({
+        printers: Object.values(stationState.workshop.printers),
+    });
 });
 
 router.post("/api/battery", (req, res) => {

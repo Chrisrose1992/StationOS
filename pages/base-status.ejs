@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>StationOS Base Status</title>
+    <link rel="stylesheet" href="/css/stationos.css">
+</head>
+<body>
+    <%- include('header') %>
+
+    <div class="layout">
+        <%- include('sidenav') %>
+
+        <main>
+            <div class="power-heading">
+                <div>
+                    <p class="eyebrow">StationOS</p>
+                    <h1>Base Status</h1>
+                </div>
+                <div class="system-pill" id="base-online">Waiting for data</div>
+            </div>
+
+            <section class="grid">
+                <article class="panel">
+                    <div class="panel-header">Base</div>
+                    <div class="panel-body power-stack">
+                        <div class="power-row">
+                            <span>Base ID</span>
+                            <strong id="base-id">-</strong>
+                        </div>
+                        <div class="power-row">
+                            <span>World</span>
+                            <strong id="world-name">-</strong>
+                        </div>
+                        <div class="power-row">
+                            <span>Session</span>
+                            <strong id="session-id">-</strong>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel-header">Heartbeat</div>
+                    <div class="panel-body power-stack">
+                        <div class="power-row">
+                            <span>Last Seen</span>
+                            <strong id="last-seen">-</strong>
+                        </div>
+                        <div class="power-row">
+                            <span>Version</span>
+                            <strong id="version">-</strong>
+                        </div>
+                    </div>
+                </article>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/stationos.js"></script>
+    <script>
+        function isFresh(lastSeen) {
+            if (!lastSeen) {
+                return false;
+            }
+
+            return Date.now() - new Date(lastSeen).getTime() < 60000;
+        }
+
+        startPageLoader(async () => {
+            const base = await fetchJson("/api/base-status");
+            const online = Boolean(base.online) && isFresh(base.last_seen);
+
+            setText("base-id", base.base_id || "-");
+            setText("world-name", base.world_name || "-");
+            setText("session-id", base.session_id || "-");
+            setText("version", base.version || "-");
+            setText("last-seen", base.last_seen ? new Date(base.last_seen).toLocaleString() : "-");
+            setText("base-online", online ? "Base online" : "Base offline");
+
+            const status = document.getElementById("base-online");
+            status.classList.remove("state-ok", "state-danger");
+            status.classList.add(online ? "state-ok" : "state-danger");
+        });
+    </script>
+</body>
+</html>

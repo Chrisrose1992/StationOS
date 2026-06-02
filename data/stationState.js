@@ -1,4 +1,13 @@
 const stationState = {
+    base_status: {
+        base_id: "",
+        last_seen: null,
+        version: "",
+        world_name: "",
+        session_id: "",
+        online: false,
+    },
+
     power_monitor: {
         battery_count: 0,
         sfg_count: 0,
@@ -74,6 +83,12 @@ const stationState = {
         led_lights: 0,
         total_lights: 0,
     },
+
+    power_banks: {},
+
+    workshop: {
+        printers: {},
+    },
 };
 
 function formatPower(watts) {
@@ -88,6 +103,10 @@ function formatPower(watts) {
     }
 
     return `${value.toFixed(0)} W`;
+}
+
+function formatPercent(ratio) {
+    return `${(Number(ratio || 0) * 100).toFixed(0)}%`;
 }
 
 function updatePowerNet() {
@@ -373,6 +392,7 @@ function buildAlerts() {
 module.exports = {
     stationState,
     formatPower,
+    formatPercent,
     updatePowerNet,
     updateGenerationCommand,
     kelvinToCelsius,

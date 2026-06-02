@@ -532,6 +532,102 @@ main {
     font-family: Consolas, Monaco, monospace;
 }
 
+.device-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+}
+
+.device-card {
+    min-width: 0;
+    padding: 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.device-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.device-card-top strong,
+.device-card-top span,
+.device-card-top em {
+    overflow-wrap: anywhere;
+}
+
+.device-card-top span {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.device-card-top em {
+    flex: 0 0 auto;
+    font-style: normal;
+    font-weight: 700;
+}
+
+.device-metric {
+    margin-top: 16px;
+    font-family: Consolas, Monaco, monospace;
+    font-size: 24px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.battery-meter {
+    height: 12px;
+    margin-top: 14px;
+    background: #0b1015;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.battery-meter div {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--green));
+    border-radius: 999px;
+}
+
+.state-warn .battery-meter div {
+    background: linear-gradient(90deg, var(--amber), var(--blue));
+}
+
+.state-danger .battery-meter div {
+    background: linear-gradient(90deg, var(--red), var(--amber));
+}
+
+.device-rows {
+    display: grid;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.device-rows div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+}
+
+.device-rows span {
+    color: var(--muted);
+}
+
+.device-rows strong {
+    font-family: Consolas, Monaco, monospace;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
 .colour-readout {
     display: inline-flex;
     align-items: center;
