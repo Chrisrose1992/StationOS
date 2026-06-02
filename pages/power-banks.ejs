@@ -47,24 +47,29 @@
 
         function renderBank(bank) {
             const state = bankState(bank);
+            const charge = Math.max(0, Math.min(100, Number(bank.ratio || 0) * 100));
 
             return `
                 <article class="device-card state-${state}">
-                    <div class="device-card-top">
-                        <div>
-                            <strong>${escapeHtml(bank.name || bank.id)}</strong>
-                            <span>${escapeHtml(bank.id)}</span>
+                    <div class="bank-card-layout">
+                        <div class="bank-card-content">
+                            <div class="device-card-top">
+                                <div>
+                                    <strong>${escapeHtml(bank.name || bank.id)}</strong>
+                                    <span>${escapeHtml(bank.id)}</span>
+                                </div>
+                                <em class="${state}">${bank.online ? "Online" : "Offline"}</em>
+                            </div>
+                            <div class="device-metric">${escapeHtml(bank.charge || `${charge.toFixed(0)}%`)}</div>
+                            <div class="device-rows">
+                                <div><span>Output</span><strong>${escapeHtml(bank.actual_power_out || "0 W")}</strong></div>
+                                <div><span>Potential In</span><strong>${escapeHtml(bank.potential_power_in || "0 W")}</strong></div>
+                                <div><span>Battery Count</span><strong>${Number(bank.count || 0)}</strong></div>
+                            </div>
                         </div>
-                        <em class="${state}">${bank.online ? "Online" : "Offline"}</em>
-                    </div>
-                    <div class="battery-meter">
-                        <div style="width: ${Math.max(0, Math.min(100, Number(bank.ratio || 0) * 100))}%"></div>
-                    </div>
-                    <div class="device-metric">${escapeHtml(bank.charge || "0%")}</div>
-                    <div class="device-rows">
-                        <div><span>Output</span><strong>${escapeHtml(bank.actual_power_out || "0 W")}</strong></div>
-                        <div><span>Potential In</span><strong>${escapeHtml(bank.potential_power_in || "0 W")}</strong></div>
-                        <div><span>Battery Count</span><strong>${Number(bank.count || 0)}</strong></div>
+                        <div class="battery-icon bank-battery-icon" aria-hidden="true">
+                            <div style="height: ${charge}%"></div>
+                        </div>
                     </div>
                 </article>
             `;

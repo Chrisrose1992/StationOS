@@ -421,6 +421,36 @@ main {
     transition: height 0.3s ease;
 }
 
+.bank-card-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 58px;
+    gap: 16px;
+    align-items: center;
+}
+
+.bank-card-content {
+    min-width: 0;
+}
+
+.bank-battery-icon {
+    justify-self: end;
+}
+
+.bank-battery-icon div {
+    width: 100%;
+    background: linear-gradient(180deg, var(--green), var(--blue));
+    border-radius: 4px;
+    transition: height 0.3s ease;
+}
+
+.state-warn .bank-battery-icon div {
+    background: linear-gradient(180deg, var(--amber), var(--blue));
+}
+
+.state-danger .bank-battery-icon div {
+    background: linear-gradient(180deg, var(--red), var(--amber));
+}
+
 .power-stack {
     display: grid;
     gap: 10px;
