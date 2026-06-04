@@ -3,170 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>StationOS Hallway</title>
+    <title>StationOS <%= roomName || 'Room' %></title>
     <link rel="stylesheet" href="/css/stationos.css">
 </head>
 <body>
-    <%- include('header') %>
-
-    <div class="layout">
-        <%- include('sidenav') %>
-
-        <main>
-            <div class="power-heading">
-                <div>
-                    <p class="eyebrow">StationOS</p>
-                    <h1 id="room-title">Hallway</h1>
-                </div>
-                <div class="system-pill" id="room-state">Waiting for data</div>
-            </div>
-
-            <section class="power-layout">
-                <article class="panel" id="occupancy-panel">
-                    <div class="panel-header">Room Status</div>
-                    <div class="panel-body power-stack">
-                        <div class="power-row">
-                            <span>Room</span>
-                            <strong id="room">-</strong>
-                        </div>
-                        <div class="power-row">
-                            <span>Occupancy</span>
-                            <strong id="occupied">-</strong>
-                        </div>
-                        <div class="power-row">
-                            <span>Hazard</span>
-                            <strong id="hazard">-</strong>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="panel" id="environment-panel">
-                    <div class="panel-header">Environment</div>
-                    <div class="panel-body power-stack">
-                        <div class="power-row">
-                            <span>Temperature</span>
-                            <strong id="temperature">-</strong>
-                        </div>
-                        <div class="power-row">
-                            <span>Pressure</span>
-                            <strong id="pressure">-</strong>
-                        </div>
-                        <div class="power-row">
-                            <span>Light Colour</span>
-                            <strong class="colour-readout">
-                                <span class="colour-swatch" id="light-colour-swatch"></span>
-                                <span id="light-colour">-</span>
-                            </strong>
-                        </div>
-                    </div>
-                </article>
-            </section>
-
-            <h2 class="page-title">Atmosphere</h2>
-            <section class="atmos-grid">
-                <article class="atmos-card" id="oxygen-card">
-                    <div class="atmos-top">
-                        <span>Oxygen</span>
-                        <strong id="oxygen-value">0%</strong>
-                    </div>
-                    <div class="atmos-bar"><div id="oxygen-bar"></div></div>
-                </article>
-
-                <article class="atmos-card" id="nitrogen-card">
-                    <div class="atmos-top">
-                        <span>Nitrogen</span>
-                        <strong id="nitrogen-value">0%</strong>
-                    </div>
-                    <div class="atmos-bar"><div id="nitrogen-bar"></div></div>
-                </article>
-
-                <article class="atmos-card" id="methane-card">
-                    <div class="atmos-top">
-                        <span>Methane</span>
-                        <strong id="methane-value">0%</strong>
-                    </div>
-                    <div class="atmos-bar"><div id="methane-bar"></div></div>
-                </article>
-
-                <article class="atmos-card" id="co2-card">
-                    <div class="atmos-top">
-                        <span>Carbon Dioxide</span>
-                        <strong id="co2-value">0%</strong>
-                    </div>
-                    <div class="atmos-bar"><div id="co2-bar"></div></div>
-                </article>
-
-                <article class="atmos-card" id="pollution-card">
-                    <div class="atmos-top">
-                        <span>Pollution</span>
-                        <strong id="pollution-value">0%</strong>
-                    </div>
-                    <div class="atmos-bar"><div id="pollution-bar"></div></div>
-                </article>
-            </section>
-
-            <h2 class="page-title">Lighting</h2>
-            <section class="generator-grid">
-                <article class="generator-card">
-                    <div class="generator-top">
-                        <span>Long Lights</span>
-                        <strong id="long-lights">0 online</strong>
-                    </div>
-                    <div class="generator-value" id="long-light-value">0</div>
-                </article>
-
-                <article class="generator-card">
-                    <div class="generator-top">
-                        <span>Round Lights</span>
-                        <strong id="round-lights">0 online</strong>
-                    </div>
-                    <div class="generator-value" id="round-light-value">0</div>
-                </article>
-
-                <article class="generator-card">
-                    <div class="generator-top">
-                        <span>LED Lights</span>
-                        <strong id="led-lights">0 online</strong>
-                    </div>
-                    <div class="generator-value" id="led-light-value">0</div>
-                </article>
-
-                <article class="generator-card">
-                    <div class="generator-top">
-                        <span>Total Lights</span>
-                        <strong>Room total</strong>
-                    </div>
-                    <div class="generator-value" id="total-lights">0</div>
-                </article>
-            </section>
-        </main>
-    </div>
-
-    <script src="/js/stationos.js"></script>
-    <script>
-        function percentValue(value) {
-            const number = Number(value || 0);
-
-            if (!Number.isFinite(number)) {
-                return 0;
-            }
-
-            return Math.max(0, Math.min(100, number));
-        }
-
-        function setStateClass(element, state) {
-            if (!element) {
-                return;
-            }
-
-            element.classList.remove("state-ok", "state-warn", "state-danger", "ok", "warn", "danger");
-            element.classList.add(`state-${state}`);
-
-            if (element.classList.contains("system-pill")) {
-                element.classList.add(state);
-            }
-        }
-
+    <%
+        const roomData = room || {};
         const lightColours = {
             0: { name: "Blue", hex: "#212AA5" },
             1: { name: "Gray", hex: "#7B7B7B" },
@@ -181,60 +23,127 @@
             10: { name: "Pink", hex: "#E41C99" },
             11: { name: "Purple", hex: "#732CA7" },
         };
+        const percentValue = value => Math.max(0, Math.min(100, Number(value || 0)));
+        const gasState = (value, dangerAt) => percentValue(value) >= dangerAt ? "danger" : percentValue(value) > 0 ? "warn" : "ok";
+        const hazard = roomData.hazard === 1 || roomData.hazard === true;
+        const occupied = Number(roomData.occupied || 0) > 0;
+        const displayRoomName = roomData.room || roomName || "Room";
+        const roomState = hazard ? "danger" : occupied ? "warn" : "ok";
+        const roomStateText = hazard ? "Hazard" : occupied ? "Occupied" : "Clear";
+        const lightColour = lightColours[Number(roomData.light_colour)] || { name: "Unknown", hex: "#303946" };
+        const gases = [
+            ["oxygen", "Oxygen", roomData.oxygen, 80],
+            ["nitrogen", "Nitrogen", roomData.nitrogen, 90],
+            ["methane", "Methane", roomData.methane, 20],
+            ["co2", "Carbon Dioxide", roomData.carbonDioxide, 20],
+            ["pollution", "Pollution", roomData.pollution, 50],
+        ];
+    %>
+    <%- include('header') %>
 
-        function updateLightColour(value) {
-            const colour = lightColours[Number(value)] || { name: "Unknown", hex: "#303946" };
-            const swatch = document.getElementById("light-colour-swatch");
+    <div class="layout">
+        <%- include('sidenav') %>
 
-            setText("light-colour", `${colour.name} (${value ?? "-"})`);
-            swatch.style.background = colour.hex;
-        }
+        <main>
+            <div class="power-heading">
+                <div>
+                    <p class="eyebrow">StationOS</p>
+                    <h1 id="room-title"><%= displayRoomName %></h1>
+                </div>
+                <div class="system-pill state-<%= roomState %> <%= roomState %>" id="room-state"><%= roomStateText %></div>
+            </div>
 
-        function updateGas(name, value, dangerAt) {
-            const percent = percentValue(value);
-            const state = percent >= dangerAt ? "danger" : percent > 0 ? "warn" : "ok";
+            <section class="power-layout">
+                <article class="panel state-<%= roomState %>" id="occupancy-panel">
+                    <div class="panel-header">Room Status</div>
+                    <div class="panel-body power-stack">
+                        <div class="power-row">
+                            <span>Room</span>
+                            <strong id="room"><%= displayRoomName %></strong>
+                        </div>
+                        <div class="power-row">
+                            <span>Occupancy</span>
+                            <strong id="occupied"><%= occupied ? "Occupied" : "Clear" %></strong>
+                        </div>
+                        <div class="power-row">
+                            <span>Hazard</span>
+                            <strong id="hazard"><%= hazard ? "Hazard detected" : "Clear" %></strong>
+                        </div>
+                    </div>
+                </article>
 
-            setText(`${name}-value`, `${percent.toFixed(2)}%`);
-            document.getElementById(`${name}-bar`).style.width = `${percent}%`;
-            setStateClass(document.getElementById(`${name}-card`), state);
-        }
+                <article class="panel state-<%= hazard ? "danger" : "ok" %>" id="environment-panel">
+                    <div class="panel-header">Environment</div>
+                    <div class="panel-body power-stack">
+                        <div class="power-row">
+                            <span>Temperature</span>
+                            <strong id="temperature"><%= roomData.temperature ?? 0 %> C</strong>
+                        </div>
+                        <div class="power-row">
+                            <span>Pressure</span>
+                            <strong id="pressure"><%= roomData.pressure || "-" %></strong>
+                        </div>
+                        <div class="power-row">
+                            <span>Light Colour</span>
+                            <strong class="colour-readout">
+                                <span class="colour-swatch" id="light-colour-swatch" style="background: <%= lightColour.hex %>"></span>
+                                <span id="light-colour"><%= lightColour.name %> (<%= roomData.light_colour ?? "-" %>)</span>
+                            </strong>
+                        </div>
+                    </div>
+                </article>
+            </section>
 
-        function updateHallway(hallway) {
-            const hazard = hallway.hazard === 1 || hallway.hazard === true;
-            const occupied = Number(hallway.occupied || 0) > 0;
-            const roomName = hallway.room || "Hallway";
+            <h2 class="page-title">Atmosphere</h2>
+            <section class="atmos-grid">
+                <% gases.forEach(([id, label, value, dangerAt]) => {
+                    const percent = percentValue(value);
+                %>
+                    <article class="atmos-card state-<%= gasState(value, dangerAt) %>" id="<%= id %>-card">
+                        <div class="atmos-top">
+                            <span><%= label %></span>
+                            <strong id="<%= id %>-value"><%= percent.toFixed(2) %>%</strong>
+                        </div>
+                        <div class="atmos-bar"><div id="<%= id %>-bar" style="width: <%= percent %>%"></div></div>
+                    </article>
+                <% }) %>
+            </section>
 
-            setText("room-title", roomName);
-            setText("room", roomName);
-            setText("occupied", occupied ? "Occupied" : "Clear");
-            setText("hazard", hazard ? "Hazard detected" : "Clear");
-            setText("room-state", hazard ? "Hazard" : occupied ? "Occupied" : "Clear");
-            setText("temperature", `${hallway.temperature} C`);
-            setText("pressure", hallway.pressure);
-            updateLightColour(hallway.light_colour);
-            setText("long-lights", `${hallway.long_lights || 0} online`);
-            setText("round-lights", `${hallway.round_lights || 0} online`);
-            setText("led-lights", `${hallway.led_lights || 0} online`);
-            setText("long-light-value", hallway.long_lights || 0);
-            setText("round-light-value", hallway.round_lights || 0);
-            setText("led-light-value", hallway.led_lights || 0);
-            setText("total-lights", hallway.total_lights || 0);
+            <h2 class="page-title">Lighting</h2>
+            <section class="generator-grid">
+                <article class="generator-card">
+                    <div class="generator-top">
+                        <span>Long Lights</span>
+                        <strong id="long-lights"><%= roomData.long_lights || 0 %> online</strong>
+                    </div>
+                    <div class="generator-value" id="long-light-value"><%= roomData.long_lights || 0 %></div>
+                </article>
 
-            updateGas("oxygen", hallway.oxygen, 80);
-            updateGas("nitrogen", hallway.nitrogen, 90);
-            updateGas("methane", hallway.methane, 20);
-            updateGas("co2", hallway.carbonDioxide, 20);
-            updateGas("pollution", hallway.pollution, 50);
+                <article class="generator-card">
+                    <div class="generator-top">
+                        <span>Round Lights</span>
+                        <strong id="round-lights"><%= roomData.round_lights || 0 %> online</strong>
+                    </div>
+                    <div class="generator-value" id="round-light-value"><%= roomData.round_lights || 0 %></div>
+                </article>
 
-            setStateClass(document.getElementById("occupancy-panel"), hazard ? "danger" : occupied ? "warn" : "ok");
-            setStateClass(document.getElementById("environment-panel"), hazard ? "danger" : "ok");
-            setStateClass(document.getElementById("room-state"), hazard ? "danger" : occupied ? "warn" : "ok");
-        }
+                <article class="generator-card">
+                    <div class="generator-top">
+                        <span>LED Lights</span>
+                        <strong id="led-lights"><%= roomData.led_lights || 0 %> online</strong>
+                    </div>
+                    <div class="generator-value" id="led-light-value"><%= roomData.led_lights || 0 %></div>
+                </article>
 
-        startPageLoader(async () => {
-            const hallway = await fetchJson("/api/hallway");
-            updateHallway(hallway);
-        });
-    </script>
+                <article class="generator-card">
+                    <div class="generator-top">
+                        <span>Total Lights</span>
+                        <strong>Room total</strong>
+                    </div>
+                    <div class="generator-value" id="total-lights"><%= roomData.total_lights || 0 %></div>
+                </article>
+            </section>
+        </main>
+    </div>
 </body>
 </html>

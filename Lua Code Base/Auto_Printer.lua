@@ -3,6 +3,7 @@ local LT = ic.enums.LogicType
 local PRINTER_SLOT = 0
 local STACKER_SLOT = 1
 local SERVER_URL = "http://127.0.0.1:4000"
+local MEM_PRINT_AMOUNT = 0
 local DEFAULT_PRINT_AMOUNT = 100
 
 local ui = ss.ui.surface("main")
@@ -12,7 +13,14 @@ local size = ui:size()
 local W = size.w
 local H = size.h
 
-local printAmount = DEFAULT_PRINT_AMOUNT
+
+local savedAmount = mem_read(MEM_PRINT_AMOUNT)
+
+local printAmount =
+    (savedAmount ~= nil and savedAmount > 0)
+    and savedAmount
+    or DEFAULT_PRINT_AMOUNT
+
 local currentRecipeHash = 0
 local currentPrefabName = nil
 local lookupRequestId = nil
@@ -48,6 +56,8 @@ local function startPrinting()
     if printAmount <= 0 then
         return
     end
+
+    mem_write(MEM_PRINT_AMOUNT, printAmount)
 
     ic.write(STACKER_SLOT, LT.Setting, printAmount)
     ic.write(PRINTER_SLOT, LT.Activate, 1)
@@ -230,6 +240,8 @@ local function drawQuantityInput()
 
             if amount then
                 printAmount = math.max(0, math.floor(amount))
+
+                mem_write(MEM_PRINT_AMOUNT, printAmount)
             end
         end,
     })

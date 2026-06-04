@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station Power Monitor</title>
+
+    <style>
+        body {
+            background: #1e1e1e;
+            color: #e0e0e0;
+            font-family: Consolas, monospace;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #4fc3f7;
+        }
+
+        h2 {
+            color: #81c784;
+            margin-top: 30px;
+        }
+
+        .card {
+            background: #2b2b2b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Station Power Dashboard</h1>
+
+<div class="card">
+    <h2>Power Monitor</h2>
+    <pre><%= JSON.stringify(data, null, 2) %></pre>
+</div>
+
+<div class="card">
+    <h2>Generation Command</h2>
+    <pre><%= JSON.stringify(generationCommand, null, 2) %></pre>
+</div>
+
+<div class="card">
+    <h2>Power Banks Summary</h2>
+    <pre><%= JSON.stringify(powerBanksSummary, null, 2) %></pre>
+</div>
+
+<div class="card">
+    <h2>Power Banks</h2>
+
+    <% if (powerBanks && powerBanks.length) { %>
+        <% powerBanks.forEach((bank, index) => { %>
+            <div style="margin-bottom:20px;">
+                <h3>Bank <%= index + 1 %></h3>
+                <pre><%= JSON.stringify(bank, null, 2) %></pre>
+            </div>
+        <% }) %>
+    <% } else { %>
+        <p>No power banks found.</p>
+    <% } %>
+</div>
+
+<div class="card">
+    <h2>All Data Dump</h2>
+    <pre><%= JSON.stringify({
+            data,
+            generationCommand,
+            powerBanks,
+            powerBanksSummary
+        }, null, 2) %></pre>
+</div>
+
+</body>
+</html>

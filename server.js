@@ -2,6 +2,11 @@ const express = require("express");
 const path = require("path");
 const postRoutes = require("./routes/post_route");
 const getRoutes = require("./routes/get_routes");
+const mainRoutes = require("./routes/index");
+const {
+    stationState,
+    buildAlerts,
+} = require("./data/stationState");
 
 const app = express();
 const port = Number(process.env.SERVER_PORT) || 4000;
@@ -14,12 +19,28 @@ app.use(express.static(path.join(__dirname, "public")));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "pages"));
 
+app.use((req, res, next) => {
+    res.locals.currentPath = req.path;
+    res.locals.rooms = stationState.rooms;
+    res.locals.alerts = buildAlerts();
+    res.locals.statusText = "Server rendered";
+    next();
+});
+
+app.use("/api", (req, res, next) => {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.set("Pragma", "no-cache");
+    res.set("Expires", "0");
+    next();
+});
+
 let command = {
     action: "start_generator",
 };
 
 app.use("/", getRoutes);
 app.use("/", postRoutes);
+app.use("/", mainRoutes);
 
 app.get("/health", (req, res) => {
     res.status(200).json({ status: "ok" });

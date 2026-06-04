@@ -1,8 +1,24 @@
 <header>
     <a class="brand" href="/">StationOS</a>
-    <div class="status" id="status">Connecting...</div>
+    <div class="status" id="status"><%= locals.statusText || "Server rendered" %></div>
 </header>
-<section class="alert-banner is-clear" id="alert-banner">
-    <div class="alert-banner-title" id="alert-banner-title">All systems nominal</div>
-    <div class="alert-banner-items" id="alert-banner-items"></div>
+<script defer src="/js/stationos.js"></script>
+<%
+    const alertList = locals.alerts || [];
+    const hasDangerAlert = alertList.some(alert => alert.level === "danger");
+    const hasWarnAlert = alertList.some(alert => alert.level === "warn");
+    const alertBannerClass = hasDangerAlert ? "is-danger" : hasWarnAlert ? "is-warn" : "is-clear";
+%>
+<section class="alert-banner <%= alertBannerClass %>" id="alert-banner">
+    <div class="alert-banner-title" id="alert-banner-title">
+        <%= alertList.length ? `${alertList.length} active event${alertList.length === 1 ? "" : "s"}` : "All systems nominal" %>
+    </div>
+    <div class="alert-banner-items" id="alert-banner-items">
+        <% alertList.forEach((alert) => { %>
+            <div class="alert-item alert-<%= alert.level %>">
+                <strong><%= alert.title %></strong>
+                <span><%= alert.message %></span>
+            </div>
+        <% }) %>
+    </div>
 </section>

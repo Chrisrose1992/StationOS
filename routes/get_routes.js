@@ -25,11 +25,6 @@ function normalizeHash(value) {
     return null;
 }
 
-router.get("/power", (req, res) => {
-    res.render("power", {
-        data: stationState.power_monitor,
-    });
-});
 
 router.get("/api/generation_command", (req, res) => {
     res.json(updateGenerationCommand());

@@ -7,6 +7,12 @@
     <link rel="stylesheet" href="/css/stationos.css">
 </head>
 <body>
+    <%
+        const weatherData = weather || {};
+        const weatherMode = Number(weatherData.weather_mode || 0);
+        const weatherState = weatherData.weather_error ? "danger" : weatherMode === 2 ? "danger" : weatherMode === 1 ? "warn" : "ok";
+        const isNight = weatherData.isNight === "Night Time";
+    %>
     <%- include('header') %>
 
     <div class="layout">
@@ -18,35 +24,35 @@
                     <p class="eyebrow">StationOS</p>
                     <h1>Weather Control</h1>
                 </div>
-                <div class="system-pill" id="weather-state">Waiting for data</div>
+                <div class="system-pill state-<%= weatherState %> <%= weatherState %>" id="weather-state"><%= weatherData.weather_status || "No data" %></div>
             </div>
 
             <section class="power-layout">
-                <article class="panel" id="storm-panel">
+                <article class="panel state-<%= weatherState %>" id="storm-panel">
                     <div class="panel-header">Storm Status</div>
                     <div class="panel-body power-stack">
                         <div class="power-row">
                             <span>Status</span>
-                            <strong id="weather-status">-</strong>
+                            <strong id="weather-status"><%= weatherData.weather_status || "-" %></strong>
                         </div>
                         <div class="power-row">
                             <span>Mode</span>
-                            <strong id="weather-mode">-</strong>
+                            <strong id="weather-mode"><%= weatherData.weather_mode ?? "-" %></strong>
                         </div>
                         <div class="power-row">
                             <span>Next Event</span>
-                            <strong id="next-event">-</strong>
+                            <strong id="next-event"><%= weatherData.weather_next_event_label || weatherData.weather_next_event || "-" %></strong>
                         </div>
                     </div>
                 </article>
 
-                <article class="panel" id="cycle-panel">
+                <article class="panel state-<%= isNight ? "warn" : "ok" %>" id="cycle-panel">
                     <div class="panel-header">Day Cycle</div>
                     <div class="panel-body weather-cycle">
-                        <div class="weather-orb" id="weather-orb"></div>
+                        <div class="weather-orb <%= isNight ? "night" : "" %>" id="weather-orb"></div>
                         <div>
-                            <div class="metric" id="day-night">-</div>
-                            <div class="label" id="weather-powered">Weather station power</div>
+                            <div class="metric" id="day-night"><%= weatherData.isNight || "-" %></div>
+                            <div class="label" id="weather-powered"><%= weatherData.weather_powered ? "Powered" : "No power" %></div>
                         </div>
                     </div>
                 </article>
@@ -54,121 +60,55 @@
 
             <h2 class="page-title">Outdoor Environment</h2>
             <section class="generator-grid">
-                <article class="generator-card" id="temperature-card">
+                <article class="generator-card state-ok" id="temperature-card">
                     <div class="generator-top">
                         <span>Temperature</span>
                         <strong>Celsius</strong>
                     </div>
-                    <div class="generator-value" id="temperature">-</div>
+                    <div class="generator-value" id="temperature"><%= weatherData.outdoor_temperature ?? "-" %> C</div>
                 </article>
 
-                <article class="generator-card" id="pressure-card">
+                <article class="generator-card state-ok" id="pressure-card">
                     <div class="generator-top">
                         <span>Pressure</span>
                         <strong>Outdoor</strong>
                     </div>
-                    <div class="generator-value" id="pressure">-</div>
+                    <div class="generator-value" id="pressure"><%= weatherData.outdoor_pressure || "-" %></div>
                 </article>
 
-                <article class="generator-card" id="horizontal-card">
+                <article class="generator-card state-ok" id="horizontal-card">
                     <div class="generator-top">
                         <span>Horizontal</span>
                         <strong>Solar axis</strong>
                     </div>
-                    <div class="generator-value" id="horizontal">-</div>
+                    <div class="generator-value" id="horizontal"><%= weatherData.Horizontal ?? "-" %></div>
                 </article>
 
-                <article class="generator-card" id="vertical-card">
+                <article class="generator-card state-ok" id="vertical-card">
                     <div class="generator-top">
                         <span>Vertical</span>
                         <strong>Solar axis</strong>
                     </div>
-                    <div class="generator-value" id="vertical">-</div>
+                    <div class="generator-value" id="vertical"><%= weatherData.Vertical ?? "-" %></div>
                 </article>
 
-                <article class="generator-card" id="solar-radiance-card">
+                <article class="generator-card state-<%= Number(weatherData.solar_radiance || 0) > 0 ? "ok" : "warn" %>" id="solar-radiance-card">
                     <div class="generator-top">
                         <span>Solar Radiance</span>
                         <strong>W/m2</strong>
                     </div>
-                    <div class="generator-value" id="solar-radiance">-</div>
+                    <div class="generator-value" id="solar-radiance"><%= weatherData.solar_radiance ?? "-" %> W/m2</div>
                 </article>
 
-                <article class="generator-card" id="weather-error-card">
+                <article class="generator-card state-<%= weatherData.weather_error ? "danger" : "ok" %>" id="weather-error-card">
                     <div class="generator-top">
                         <span>Error</span>
                         <strong>Weather Station</strong>
                     </div>
-                    <div class="generator-value" id="weather-error">-</div>
+                    <div class="generator-value" id="weather-error"><%= weatherData.weather_error ? "Error" : "None" %></div>
                 </article>
             </section>
         </main>
     </div>
-
-    <script src="/js/stationos.js"></script>
-    <script>
-        function setStateClass(element, state) {
-            if (!element) {
-                return;
-            }
-
-            element.classList.remove("state-ok", "state-warn", "state-danger", "ok", "warn", "danger");
-            element.classList.add(`state-${state}`);
-
-            if (element.classList.contains("system-pill")) {
-                element.classList.add(state);
-            }
-        }
-
-        function weatherState(weather) {
-            const mode = Number(weather.weather_mode || 0);
-
-            if (mode === 2) {
-                return "danger";
-            }
-
-            if (mode === 1) {
-                return "warn";
-            }
-
-            return "ok";
-        }
-
-        function updateWeather(weather) {
-            const state = weatherState(weather);
-            const isNight = weather.isNight === "Night Time";
-
-            setText("weather-state", weather.weather_status || "No data");
-            setText("weather-status", weather.weather_status);
-            setText("weather-mode", weather.weather_mode);
-            setText("next-event", weather.weather_next_event_label || weather.weather_next_event);
-            setText("day-night", weather.isNight);
-            setText("weather-powered", weather.weather_powered ? "Powered" : "No power");
-            setText("temperature", `${weather.outdoor_temperature} C`);
-            setText("pressure", weather.outdoor_pressure);
-            setText("horizontal", weather.Horizontal);
-            setText("vertical", weather.Vertical);
-            setText("solar-radiance", `${weather.solar_radiance} W/m2`);
-            setText("weather-error", weather.weather_error ? "Error" : "None");
-
-            document.getElementById("weather-orb").classList.toggle("night", isNight);
-            setStateClass(document.getElementById("weather-state"), weather.weather_error ? "danger" : state);
-            setStateClass(document.getElementById("storm-panel"), weather.weather_error ? "danger" : state);
-            setStateClass(document.getElementById("cycle-panel"), isNight ? "warn" : "ok");
-            setStateClass(document.getElementById("temperature-card"), "ok");
-            setStateClass(document.getElementById("pressure-card"), "ok");
-            setStateClass(document.getElementById("horizontal-card"), "ok");
-            setStateClass(document.getElementById("vertical-card"), "ok");
-            setStateClass(document.getElementById("solar-radiance-card"), Number(weather.solar_radiance || 0) > 0 ? "ok" : "warn");
-            setStateClass(document.getElementById("weather-error-card"), weather.weather_error ? "danger" : "ok");
-
-            renderSignals("weather-signals", weather);
-        }
-
-        startPageLoader(async () => {
-            const weather = await fetchJson("/api/weather");
-            updateWeather(weather);
-        });
-    </script>
 </body>
 </html>
