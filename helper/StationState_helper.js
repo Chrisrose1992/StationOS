@@ -15,100 +15,80 @@ function createRoomState(name = "") {
         round_lights: 0,
         led_lights: 0,
         total_lights: 0,
+        updatedAt: null,
     };
 }
 
-const hallwayRoom = createRoomState("Hallway");
+const lightColours = {
+    0: { name: "Blue", hex: "#212AA5" },
+    1: { name: "Gray", hex: "#7B7B7B" },
+    2: { name: "Green", hex: "#3F9B39" },
+    3: { name: "Orange", hex: "#FF662B" },
+    4: { name: "Red", hex: "#E70200" },
+    5: { name: "Yellow", hex: "#FFBC1B" },
+    6: { name: "White", hex: "#E7E7E7" },
+    7: { name: "Black", hex: "#080908" },
+    8: { name: "Brown", hex: "#633C2B" },
+    9: { name: "Khaki", hex: "#63633F" },
+    10: { name: "Pink", hex: "#E41C99" },
+    11: { name: "Purple", hex: "#732CA7" },
+};
+
+function getLightColour(value) {
+    const colourId = Number(value);
+
+    return lightColours[colourId] || {
+        name: "Unknown",
+        hex: "#7B7B7B",
+    };
+}
 
 const stationState = {
-    base_status: {
-        base_id: "",
-        last_seen: null,
-        version: "",
-        world_name: "",
-        session_id: "",
-        online: false,
+    rooms: {},
+
+    command: {
+        weather: {
+            isNight: true,
+            isStorm: false,
+        },
+        roomLighting: {},
     },
 
     power_monitor: {
-        battery_count: 0,
-        sfg_count: 0,
-        gfg_count: 0,
-        has_battery_data: false,
-        battery_charge: "0%",
-        battery_charge_percent: 0,
-        battery_error: false,
-        sfg_power: "0 W",
-        sfg_power_w: 0,
-        sfg_error: false,
-        sfg_coal_count: 0,
-        sfg_coal_capacity: 0,
-        gfg_power: "0 W",
-        gfg_power_w: 0,
-        gfg_error: false,
-        gfg_mols: 0,
-        gfg_mols_label: "0 mol",
-        windTurbine_power: "0 W",
-        wind_power_w: 0,
-        power_actual_in: "0 W",
-        power_actual_in_w: 0,
-        power_actual_out: "0 W",
-        power_actual_out_w: 0,
-        power_required: "0 W",
-        power_required_out_w: 0,
-        net_power: "0 W",
-        net_power_w: 0,
+        wind_turbine: {
+            powerOutput: 0,
+            windSpeed: 0,
+            turbineSpeed: 0,
+        }
     },
 
-    generation_command: {
-        action: "generation_off",
-        enabled: false,
-        gas_fuel_enabled: false,
-        solid_fuel_enabled: false,
-        target: "none",
-        reason: "Waiting for station data",
-        diagnostics: {},
-        battery_low_threshold: 30,
-        battery_high_threshold: 95,
-        storm_lockout: true,
-    },
-
-    weather: {
-        isNight: false,
-        Horizontal: 0,
-        Vertical: 0,
+    weather_monitor: {
         weather_mode: 0,
-        weather_status: "",
-        weather_powered: false,
+        weather_event: "",
+        nextEvent_raw: 0,
+        nextEvent: "",
+        nextWeatherHash: 0,
+        windStrength: "",
         weather_error: false,
-        weather_next_event: 0,
-        weather_next_event_label: "0s",
-        solar_radiance: 0,
-        outdoor_pressure: 0,
-        outdoor_temperature: 0,
-    },
-
-    rooms: {
-        hallway: hallwayRoom,
-    },
-
-    hallway: hallwayRoom,
-
-    power_banks: {},
-    power_banks_summary: {
-        battery_count: 0,
-        battery_ratio: 0,
-        battery_charge: "0%",
-        actual_power_out_w: 0,
-        actual_power_out: "0 W",
-        potential_power_in_w: 0,
-        potential_power_in: "0 W",
-        online: false,
-    },
-
-    workshop: {
-        printers: {},
+        daysSinceLastEvent: "",
+        outsidePressure: "",
+        outsideTemperature: 0,
+        isNight: "",
+        horizontal: "",
+        vertical: "",
+        timeOfDay: "",
+        daysPast: 0,
+        dayLengthSeconds: "",
+        solarIrradiance: 0,
+        isEclipse: false,
+        weatherSolarRatio: 0,
+        updatedAt: null,
     },
 };
 
-module.exports = { stationState, createRoomState };
+module.exports = {
+    createRoomState,
+    getLightColour,
+    lightColours,
+    stationState,
+};

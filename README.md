@@ -1,90 +1,125 @@
 # StationOS
 
-StationOS is a web-based telemetry and automation platform for Stationeers.
+StationOS is a local telemetry and automation dashboard for Stationeers. In-game
+IC/Lua scripts send device readings to an Express server, which formats and
+stores the latest state in memory for display through EJS dashboards.
 
-Using the Stationeers HTTP API, IC scripts export live telemetry to an Express backend where it is processed and displayed through a collection of operational dashboards. The platform also supports sending commands and automation decisions back into the game, enabling two-way communication between Stationeers and external services.
-
-StationOS is designed to function as a station-wide operations console, providing real-time visibility into critical systems such as power generation, weather conditions, atmospheric data, room status, and automation controls.
+The server also exposes command endpoints that IC scripts can poll, allowing
+weather conditions and dashboard lighting controls to influence in-game
+automation.
 
 ## Screenshots
 
 ![StationOS dashboard](<Screenshots/Screenshot 2026-05-31 090425.png>)
 
-![StationOS power monitoring](<Screenshots/Screenshot 2026-05-31 195950.png>)
+![StationOS power monitoring](<Screenshots/Screenshot 2026-06-10 085505.png>)
 
-![StationOS weather monitoring](<Screenshots/Screenshot 2026-05-31 200010.png>)
+![StationOS weather monitoring](<Screenshots/Screenshot 2026-06-10 085108.png>)
 
-## Features
-
-### Power Management
-
-* Battery monitoring and status reporting
-* Power generation tracking
-* Grid load analysis
-* Generator monitoring and automation
-* Real-time power alerts
+## Current Features
 
 ### Weather Monitoring
 
-* Storm detection and tracking
-* Solar positioning telemetry
-* Environmental monitoring
-* Day/night cycle reporting
-* Weather-based automation
+- Storm status and upcoming event timing
+- Outside temperature and pressure
+- Wind strength and solar irradiance
+- Day/night state and descriptive time-of-day periods
+- Solar horizontal and vertical angles
+- Eclipse and weather solar-ratio reporting
+- Animated sun or moon cycle card
+- Weather-driven night and storm commands for room automation
 
 ### Room Monitoring
 
-* Atmospheric composition analysis
-* Pressure and temperature monitoring
-* Lighting status and reporting
-* Room occupancy and hazard indicators
-* Environmental alerts
+- Dynamically created room dashboards
+- Occupancy, hazard, pressure, and temperature readings
+- Oxygen, nitrogen, methane, carbon dioxide, and pollutant percentages
+- Long, round, and LED light counts
+- Remote room-light colour selection
 
-### Automation
+### Power Monitoring
 
-* HTTP-based telemetry export
-* External automation logic
-* Remote configuration and control
-* Event-driven automation workflows
-* Two-way communication between Stationeers and external services
+- Wind turbine power output
+- Wind speed and turbine speed telemetry
+- Power generation dashboard shell for future devices
+
+### Utilities
+
+- Signed decimal and hexadecimal Stationeers hash lookup
+- Responsive dashboard and sidebar navigation
+- Structured request logging
 
 ## Architecture
 
-StationOS uses a simple telemetry architecture:
-
 ```text
-Stationeers IC Scripts
-          │
-          ▼
-      HTTP POST
-          │
-          ▼
-    Express Backend
-          │
-          ▼
-   StationOS Dashboard
-          ▲
-          │
-       HTTP GET
-          │
-          ▼
-Stationeers IC Scripts
+Stationeers IC/Lua scripts
+          |
+          | HTTP POST telemetry
+          v
+    Express controllers
+          |
+          v
+  In-memory station state
+          |
+          v
+      EJS dashboards
+
+Stationeers IC/Lua scripts
+          ^
+          | HTTP GET commands
+          |
+    Express command API
 ```
 
-IC scripts periodically send telemetry to the backend using HTTP POST requests. The backend stores and processes this information before presenting it through a web-based dashboard.
+Telemetry is stored in memory and resets whenever the Node.js process restarts.
+No database is currently configured.
 
-IC scripts can also retrieve automation settings, commands, and configuration data using HTTP GET requests, allowing external systems to influence in-game automation and station management.
+## Getting Started
 
-## Technology Stack
+Requirements:
 
-* Stationeers IC Scripts (Lua)
-* Express.js
-* Node.js
-* HTTP API Integration
-* Web-based Dashboard Interface
+- Node.js
+- Stationeers with the HTTP-capable IC/Lua integration
 
-## Project Goals
+Install dependencies and start the server:
 
-The goal of StationOS is to provide a SCADA-inspired monitoring and automation platform for Stationeers, allowing players to manage increasingly complex stations through a centralized operations interface.
+```powershell
+npm install
+npm start
+```
 
-By combining in-game telemetry with external automation and visualization tools, StationOS extends station management beyond traditional IC programming and into a full operational monitoring environment.
+For development with automatic restarts:
+
+```powershell
+npm run dev
+```
+
+The default address is:
+
+```text
+http://127.0.0.1:5000
+```
+
+Set `SERVER_PORT` to use a different port.
+
+## Project Structure
+
+```text
+controller/   Request handlers and telemetry processing
+helper/       Shared state, formatting, and dashboard data
+Lua Code/     Stationeers telemetry and command scripts
+public/       Dashboard CSS and browser JavaScript
+routes/       Express page and API routes
+views/        EJS pages and shared partials
+```
+
+See [URLS.md](URLS.md) for the complete route and payload reference. See
+[Lua Code/README.md](<Lua Code/README.md>) for in-game script setup.
+
+## Technology
+
+- Node.js
+- Express
+- EJS
+- Stationeers IC/Lua HTTP API
+- Vanilla JavaScript and CSS

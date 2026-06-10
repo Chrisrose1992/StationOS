@@ -1,0 +1,28 @@
+<%- include('partials/page-start') %>
+
+<section class="hero-panel">
+    <div>
+        <p class="eyebrow"><%= eyebrow %></p>
+        <h2><%= heading %></h2>
+        <p><%= description %></p>
+    </div>
+    <span class="badge neutral">Awaiting telemetry</span>
+</section>
+
+<section class="metric-grid">
+    <% metrics.forEach((metric) => { %>
+        <article class="metric-card">
+            <span class="metric-label"><%= metric.label %></span>
+            <strong class="<%= metric.className || '' %>"><%= metric.value %></strong>
+            <span class="metric-note"><%= metric.note %></span>
+        </article>
+    <% }) %>
+</section>
+
+<section class="panel empty-state">
+    <span class="empty-state-icon"><%= emptyIcon %></span>
+    <h2><%= emptyTitle %></h2>
+    <p><%= emptyMessage %></p>
+</section>
+
+<%- include('partials/page-end') %>

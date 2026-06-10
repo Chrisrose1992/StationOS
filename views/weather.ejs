@@ -1,0 +1,171 @@
+<%- include('partials/page-start') %>
+
+<%
+    const hasTelemetry = Boolean(weather.updatedAt);
+    const isStorm = weather.weather_mode === 1 || weather.weather_mode === 2;
+    const isNightCycle = String(weather.isNight).toLowerCase().includes('night');
+    const solarRatio = `${(Number(weather.weatherSolarRatio || 0) * 100).toFixed(1)}%`;
+    const updatedAt = hasTelemetry
+        ? new Date(weather.updatedAt).toLocaleString('en-GB')
+        : 'Awaiting first report';
+%>
+
+<section class="hero-panel">
+    <div>
+        <p class="eyebrow">External conditions</p>
+        <h2>Weather monitoring</h2>
+        <p>Live daylight, storm, atmospheric and solar telemetry.</p>
+    </div>
+    <div class="room-hero-status">
+        <% if (!hasTelemetry) { %>
+            <span class="badge neutral">Awaiting telemetry</span>
+        <% } else if (weather.weather_error) { %>
+            <span class="badge danger">Sensor error</span>
+        <% } else if (isStorm) { %>
+            <span class="badge danger"><%= weather.weather_event %></span>
+        <% } else { %>
+            <span class="badge success"><%= weather.weather_event || 'Clear' %></span>
+        <% } %>
+        <span class="live-status <%= hasTelemetry ? 'connected' : '' %>">
+            <%= hasTelemetry ? `Updated ${updatedAt}` : updatedAt %>
+        </span>
+    </div>
+</section>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <span class="metric-label">Weather status</span>
+        <strong class="metric-word <%= isStorm ? 'text-red' : 'text-green' %>">
+            <%= weather.weather_event || 'Unknown' %>
+        </strong>
+        <span class="metric-note">Mode <%= weather.weather_mode %></span>
+    </article>
+
+    <article class="metric-card weather-cycle-card <%= isNightCycle ? 'night' : 'day' %>">
+        <div class="weather-sky" aria-hidden="true">
+            <span class="weather-star star-one"></span>
+            <span class="weather-star star-two"></span>
+            <span class="weather-star star-three"></span>
+            <span class="weather-orb <%= isNightCycle ? 'moon' : 'sun' %>"></span>
+        </div>
+        <div class="weather-cycle-copy">
+            <span class="metric-label">Daylight cycle</span>
+            <strong class="metric-word"><%= weather.isNight || 'Unknown' %></strong>
+            <span class="metric-note"><%= weather.timeOfDay || 'Cycle position unavailable' %></span>
+        </div>
+    </article>
+
+    <article class="metric-card">
+        <span class="metric-label">Outside temperature</span>
+        <strong><%= Number(weather.outsideTemperature || 0).toFixed(2) %>&deg;C</strong>
+        <span class="metric-note">External gas sensor</span>
+    </article>
+
+    <article class="metric-card">
+        <span class="metric-label">Outside pressure</span>
+        <strong><%= weather.outsidePressure || '0.0 kPa' %></strong>
+        <span class="metric-note">External atmosphere</span>
+    </article>
+</section>
+
+<section class="weather-detail-grid">
+    <article class="panel">
+        <div class="panel-heading">
+            <h2>Current conditions</h2>
+            <span>Live sensor readings</span>
+        </div>
+
+        <dl class="weather-reading-list">
+            <div>
+                <dt>Wind strength</dt>
+                <dd><%= weather.windStrength || '0.0%' %></dd>
+            </div>
+            <div>
+                <dt>Solar irradiance</dt>
+                <dd><%= Number(weather.solarIrradiance || 0).toFixed(2) %> W/m&sup2;</dd>
+            </div>
+            <div>
+                <dt>Weather solar ratio</dt>
+                <dd><%= solarRatio %></dd>
+            </div>
+            <div>
+                <dt>Eclipse</dt>
+                <dd class="<%= weather.isEclipse ? 'text-red' : 'text-green' %>">
+                    <%= weather.isEclipse ? 'Active' : 'No eclipse' %>
+                </dd>
+            </div>
+            <div>
+                <dt>Horizontal angle</dt>
+                <dd><%= weather.horizontal || '0.00' %>&deg;</dd>
+            </div>
+            <div>
+                <dt>Vertical angle</dt>
+                <dd><%= weather.vertical || '0.00' %>&deg;</dd>
+            </div>
+        </dl>
+    </article>
+
+    <article class="panel">
+        <div class="panel-heading">
+            <h2>Weather events</h2>
+            <span>Forecast timing</span>
+        </div>
+
+        <dl class="weather-reading-list">
+            <div>
+                <dt>Current event</dt>
+                <dd><%= weather.weather_event || 'Unknown' %></dd>
+            </div>
+            <div>
+                <dt>Next event</dt>
+                <dd><%= weather.nextEvent || '0s' %></dd>
+            </div>
+            <div>
+                <dt>Next event raw</dt>
+                <dd><%= Number(weather.nextEvent_raw || 0) %> seconds</dd>
+            </div>
+            <div>
+                <dt>Days since last event</dt>
+                <dd><%= weather.daysSinceLastEvent || '0s' %></dd>
+            </div>
+            <div>
+                <dt>Next weather hash</dt>
+                <dd><%= weather.nextWeatherHash || 0 %></dd>
+            </div>
+            <div>
+                <dt>Weather sensor</dt>
+                <dd class="<%= weather.weather_error ? 'text-red' : 'text-green' %>">
+                    <%= weather.weather_error ? 'Error' : 'Operational' %>
+                </dd>
+            </div>
+        </dl>
+    </article>
+
+    <article class="panel">
+        <div class="panel-heading">
+            <h2>Planetary cycle</h2>
+            <span>Day and solar tracking</span>
+        </div>
+
+        <dl class="weather-reading-list">
+            <div>
+                <dt>Time of day</dt>
+                <dd><%= weather.timeOfDay || 'Unknown' %></dd>
+            </div>
+            <div>
+                <dt>Days passed</dt>
+                <dd><%= weather.daysPast || 0 %></dd>
+            </div>
+            <div>
+                <dt>Day length</dt>
+                <dd><%= weather.dayLengthSeconds || '0s' %></dd>
+            </div>
+            <div>
+                <dt>Last telemetry</dt>
+                <dd><%= updatedAt %></dd>
+            </div>
+        </dl>
+    </article>
+</section>
+
+<%- include('partials/page-end') %>

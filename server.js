@@ -1,74 +1,37 @@
-const express = require("express");
-const path = require("path");
-const postRoutes = require("./routes/post_route");
-const getRoutes = require("./routes/get_routes");
-const mainRoutes = require("./routes/index");
-const {
-    stationState,
-    buildAlerts,
-} = require("./data/stationState");
+const express = require('express');
+const path = require('path');
 
+const logger = require('./middleware/logger_middleware');
+const main_routes = require('./routes/main_routes');
 const app = express();
-const port = Number(process.env.SERVER_PORT) || 4000;
-const host = process.env.SERVER_HOST || "127.0.0.1";
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(express.static(path.join(__dirname, "public")));
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "pages"));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, './views/'));
 
-app.use((req, res, next) => {
-    res.locals.currentPath = req.path;
-    res.locals.rooms = stationState.rooms;
-    res.locals.alerts = buildAlerts();
-    res.locals.statusText = "Server rendered";
-    next();
-});
+app.use('/', main_routes);
 
-app.use("/api", (req, res, next) => {
-    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-    res.set("Pragma", "no-cache");
-    res.set("Expires", "0");
-    next();
-});
+const startServer = async () => {
+    const port = process.env.SERVER_PORT || 5000;
 
-let command = {
-    action: "start_generator",
+    app.listen(port, () => {
+        logger.info(`Server running at http://127.0.0.1:${port}`);
+        logger.info('Press CTRL-C to stop');
+    }).on('error', (err) => {
+        logger.error(`Server error: ${err.message}`);
+        process.exit(1);
+    });
+
+    // Graceful Shutdown Handlers
+    const shutdownHandler = (signal) => {
+        logger.info(`Server shutting down due to ${signal}`);
+        process.exit(0);
+    };
+
+    process.on('SIGTERM', () => shutdownHandler('SIGTERM'));
+    process.on('SIGINT', () => shutdownHandler('SIGINT'));
 };
-
-app.use("/", getRoutes);
-app.use("/", postRoutes);
-app.use("/", mainRoutes);
-
-app.get("/health", (req, res) => {
-    res.status(200).json({ status: "ok" });
-});
-
-app.get("/api/commands", (req, res) => {
-    res.json(command);
-});
-
-app.post("/api/test", (req, res) => {
-    console.log(req.body);
-    res.sendStatus(204);
-});
-
-app.use((req, res) => {
-    res.status(404).json({ error: "Not found" });
-});
-
-app.use((err, req, res, next) => {
-    console.error(err);
-    res.status(err.status || 500).json({ error: "Internal server error" });
-});
-
-// Create Server
-app.listen(port, host, () => {
-    console.log(`Server running at http://${host}:${port}`);
-    console.log("Press CTRL-C to stop");
-}).on("error", (err) => {
-    console.error(`Server error: ${err.message}`);
-    process.exit(1);
-});
+startServer().then();

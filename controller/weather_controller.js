@@ -1,41 +1,42 @@
-const {
-    formatPressure,
-    kelvinToCelsius,
-    weatherStatus,
-    formatDuration,
-} = require("../helper/format_helper.js");
+const { stationState } = require('../helper/stationState_helper');
 
-const {
-    stationState,
-    updateGenerationCommand,
-} = require("../data/stationState");
+const { formatDuration, weatherStatus, formatPressure, kelvinToCelsius, timeOfDay } = require('../helper/format_helper');
 
-async function PostWeatherData(req, res) {
+
+function weatherForecast(req, res) {
     const data = req.body;
-    const weather = stationState.weather;
+    const weather = stationState.weather_monitor;
+    const weatherMode = Number(data.weatherMode || 0);
+    const isDay = Number(data.isDay) === 1;
+    const timeOfDayValue = Number(data.timeOfDay || 0);
 
-    weather.isNight = Number(data.isNight) === 1 ? "Day Time" : "Night Time";
-    weather.Horizontal = Number(data.Horizontal).toFixed(2);
-    weather.Vertical   = Number(data.Vertical).toFixed(2);
-    weather.weather_mode = data.weather_mode;
-    weather.weather_status = weatherStatus(data.weather_mode);
-    weather.weather_powered = data.weather_powered;
+    weather.weather_mode = weatherMode;
+    weather.weather_event = weatherStatus(weatherMode);
+    weather.nextEvent_raw = data.nextEventTime;
+    weather.nextEvent = formatDuration(data.nextEventTime);
+    weather.nextWeatherHash = Number(data.nextWeatherHash || 0);
+    weather.windStrength = `${(Number(data.windStrength) * 100).toFixed(1)}%`;
     weather.weather_error = Boolean(data.weather_error);
-    weather.weather_next_event = data.weather_next_event;
-    weather.weather_next_event_label = formatDuration(data.weather_next_event);
-    weather.solar_radiance = Number(data.solar_radiance || 0).toFixed(2);
-    weather.outdoor_pressure = formatPressure(data.outdoor_pressure);
-    weather.outdoor_temperature = kelvinToCelsius(data.outdoor_temperature);
+    weather.daysSinceLastEvent = formatDuration(data.daysSinceLastEvent);
+    weather.outsidePressure = formatPressure(data.outsidePressure);
+    weather.outsideTemperature = kelvinToCelsius(data.outsideTemperature);
+    weather.isNight = isDay ? "Day Time" : "Night Time";
+    weather.horizontal = Number(data.horizontal || 0).toFixed(2);
+    weather.vertical = Number(data.vertical || 0).toFixed(2);
+    weather.timeOfDay = timeOfDay(Number(timeOfDayValue).toFixed(2));
+    weather.daysPast = Number(data.daysPast || 0);
+    weather.dayLengthSeconds = formatDuration(data.dayLengthSeconds);
+    weather.solarIrradiance = Number(data.solarIrradiance || 0);
+    weather.isEclipse = Number(data.isEclipse) === 1;
+    weather.weatherSolarRatio = Number(data.weatherSolarRatio || 0);
+    weather.updatedAt = new Date().toISOString();
 
-    updateGenerationCommand();
+    stationState.command.weather.isNight = !isDay;
+    stationState.command.weather.isStorm = weatherMode === 2 || weatherMode === 1;
 
-    res.status(200).json(weather);
+    //console.table(weather);
+
+    return res.status(200).json({ success: true, data: weather });
 }
 
-async function GetWeatherData(req, res) {
-    const weather = stationState.weather;
-
-    res.render("weather", { weather });
-}
-
-module.exports = { PostWeatherData, GetWeatherData };
+module.exports = { weatherForecast };

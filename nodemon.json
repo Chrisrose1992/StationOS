@@ -1,16 +1,23 @@
 {
   "watch": [
     "server.js",
+    "controller/",
+    "data_models/",
+    "helper/",
+    "middleware/",
     "routes/",
-    "pages/",
-    "public/"
+    "utils/",
+    "views/"
   ],
   "ignore": [
     "node_modules/",
+    ".git/",
+    ".idea/",
     "logs/",
-    ".git/"
+    "Lua Code/",
+    "public/"
   ],
-  "ext": "js,json,ejs,css",
+  "ext": "js,json,ejs",
   "exec": "node server.js",
   "delay": "1000"
 }

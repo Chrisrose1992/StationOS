@@ -31,9 +31,14 @@ function weatherStatus(mode) {
 
 function formatDuration(seconds) {
     const totalSeconds = Math.max(0, Math.floor(Number(seconds || 0)));
-    const hours = Math.floor(totalSeconds / 3600);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const remainingSeconds = totalSeconds % 60;
+
+    if (days > 0) {
+        return `${days}d ${hours}h ${minutes}m ${remainingSeconds}s`;
+    }
 
     if (hours > 0) {
         return `${hours}h ${minutes}m ${remainingSeconds}s`;
@@ -86,6 +91,23 @@ function formatPercent(ratio) {
     return `${(Number(ratio || 0) * 100).toFixed(0)}%`;
 }
 
+function timeOfDay(value) {
+
+    if (value < 0.125)
+        return "Morning";
+
+    if (value < 0.375)
+        return "Day Time";
+
+    if (value < 0.625)
+        return "Evening";
+
+    if (value < 0.875)
+        return "Night Time";
+
+    return "Early Morning";
+}
+
 module.exports = {
     formatPressure,
     kelvinToCelsius,
@@ -95,4 +117,5 @@ module.exports = {
     formatMols,
     updatePowerNet,
     formatPercent,
+    timeOfDay
 };

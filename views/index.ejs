@@ -1,0 +1,105 @@
+<%- include('partials/page-start') %>
+
+<section class="hero-panel">
+    <div>
+        <p class="eyebrow">Live station summary</p>
+        <h2>Operations overview</h2>
+        <p>Monitor connected rooms and station systems from one control surface.</p>
+    </div>
+    <span class="badge success">Nominal</span>
+</section>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <span class="metric-label">Connected rooms</span>
+        <strong><%= rooms.length %></strong>
+        <span class="metric-note">Reporting to StationOS</span>
+    </article>
+    <article class="metric-card">
+        <span class="metric-label">Room hazards</span>
+        <strong class="<%= hazardCount > 0 ? 'text-red' : 'text-green' %>"><%= hazardCount %></strong>
+        <span class="metric-note"><%= hazardCount > 0 ? 'Attention required' : 'All rooms clear' %></span>
+    </article>
+    <article class="metric-card">
+        <span class="metric-label">Weather</span>
+        <strong class="metric-word"><%= weather.isStorm ? 'Storm' : 'Clear' %></strong>
+        <span class="metric-note"><%= weather.isNight ? 'Night cycle' : 'Day cycle' %></span>
+    </article>
+    <article class="metric-card">
+        <span class="metric-label">Station status</span>
+        <strong class="metric-word text-green">Online</strong>
+        <span class="metric-note">Receiving telemetry</span>
+    </article>
+</section>
+
+<section class="panel room-overview">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">Room telemetry</p>
+            <h2>Connected rooms</h2>
+        </div>
+        <span><%= rooms.length %> reporting</span>
+    </div>
+
+    <% if (rooms.length === 0) { %>
+        <div class="empty-state compact">
+            <div class="empty-state-icon">RM</div>
+            <h2>No room telemetry yet</h2>
+            <p>Rooms will appear here after they report to the server.</p>
+        </div>
+    <% } else { %>
+        <div class="room-grid">
+            <% rooms.forEach((room) => { %>
+                <a class="room-card" href="/rooms/<%= encodeURIComponent(room.id) %>">
+                    <div class="room-card-heading">
+                        <div>
+                            <span class="room-status <%= room.hazard ? 'danger' : '' %>"></span>
+                            <strong><%= room.name %></strong>
+                        </div>
+                        <span class="badge <%= room.hazard ? 'danger' : 'success' %>"><%= room.hazard ? 'Hazard' : 'Safe' %></span>
+                    </div>
+                    <dl class="room-readings">
+                        <div><dt>Pressure</dt><dd><%= room.pressure %></dd></div>
+                        <div><dt>Temperature</dt><dd><%= room.temperature %>&deg;C</dd></div>
+                        <div><dt>Oxygen</dt><dd><%= room.oxygen %>%</dd></div>
+                        <div><dt>Occupancy</dt><dd><%= room.occupied ? 'Occupied' : 'Empty' %></dd></div>
+                        <div><dt>Lights</dt><dd><%= room.total_lights %></dd></div>
+                    </dl>
+                </a>
+            <% }) %>
+        </div>
+    <% } %>
+</section>
+
+<section class="panel">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">Quick access</p>
+            <h2>Station systems</h2>
+        </div>
+    </div>
+    <div class="system-grid">
+        <a class="system-card" href="/power-generation">
+            <span class="system-card-icon blue">&#9889;</span>
+            <div><strong>Power generation</strong><small>Generation, storage and demand</small></div>
+            <span>&rarr;</span>
+        </a>
+        <a class="system-card" href="/atmos">
+            <span class="system-card-icon green">&#9673;</span>
+            <div><strong>Atmospherics</strong><small>Gas networks and filtration</small></div>
+            <span>&rarr;</span>
+        </a>
+        <a class="system-card" href="/weather">
+            <span class="system-card-icon amber">&#9729;</span>
+            <div><strong>Weather</strong><small>External conditions and storms</small></div>
+            <span>&rarr;</span>
+        </a>
+        <a class="system-card" href="/manufacturing">
+            <span class="system-card-icon red">&#9881;</span>
+            <div><strong>Manufacturing</strong><small>Machines, queues and resources</small></div>
+            <span>&rarr;</span>
+        </a>
+    </div>
+</section>
+
+<%- include('partials/page-end') %>

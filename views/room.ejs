@@ -1,0 +1,129 @@
+<%- include('partials/page-start') %>
+
+<section class="hero-panel room-hero" data-room-live data-room-id="<%= activeRoomId %>">
+    <div>
+        <p class="eyebrow">Room telemetry</p>
+        <h2 data-room-field="room"><%= room.room || activeRoomId %></h2>
+        <p>Live environmental, occupancy and lighting telemetry. <span class="live-status" data-live-status>Connecting...</span></p>
+    </div>
+    <div class="room-hero-status">
+        <span class="badge neutral" data-room-occupancy><%= room.occupied ? 'Occupied' : 'Unoccupied' %></span>
+        <span class="badge <%= room.hazard ? 'danger' : 'success' %>" data-room-hazard><%= room.hazard ? 'Hazard detected' : 'Environment safe' %></span>
+    </div>
+</section>
+
+<section class="metric-grid room-metrics">
+    <article class="metric-card">
+        <span class="metric-label">Pressure</span>
+        <strong data-room-field="pressure"><%= room.pressure %></strong>
+        <span class="metric-note">Internal atmosphere</span>
+    </article>
+    <article class="metric-card">
+        <span class="metric-label">Temperature</span>
+        <strong><span data-room-field="temperature"><%= room.temperature %></span>&deg;C</strong>
+        <span class="metric-note">Current reading</span>
+    </article>
+    <article class="metric-card">
+        <span class="metric-label">Oxygen</span>
+        <strong><span data-room-field="oxygen"><%= room.oxygen %></span>%</strong>
+        <span class="metric-note">Atmospheric composition</span>
+    </article>
+    <article class="metric-card">
+        <span class="metric-label">Total lights</span>
+        <strong data-room-field="total_lights"><%= room.total_lights %></strong>
+        <span class="metric-note">Installed fixtures</span>
+    </article>
+</section>
+
+<div class="room-detail-grid">
+    <section class="panel room-atmosphere">
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">Atmospheric composition</p>
+                <h2>Gas mix</h2>
+            </div>
+            <span>Percentage by volume</span>
+        </div>
+        <div class="gas-list">
+            <% [
+                ['Oxygen', room.oxygen, 'blue'],
+                ['Nitrogen', room.nitrogen, 'green'],
+                ['Carbon dioxide', room.carbonDioxide, 'amber'],
+                ['Methane', room.methane, 'red'],
+                ['Pollution', room.pollution, 'muted']
+            ].forEach(([name, value, colour]) => { %>
+                <% const gasKey = {
+                    'Oxygen': 'oxygen',
+                    'Nitrogen': 'nitrogen',
+                    'Carbon dioxide': 'carbonDioxide',
+                    'Methane': 'methane',
+                    'Pollution': 'pollution'
+                }[name]; %>
+                <div class="gas-row" data-gas-row="<%= gasKey %>">
+                    <div><span><%= name %></span><strong><span data-gas-value><%= value %></span>%</strong></div>
+                    <div class="progress-track"><span class="<%= colour %>" data-gas-bar style="width: <%= Math.min(Math.max(Number(value) || 0, 0), 100) %>%"></span></div>
+                </div>
+            <% }) %>
+        </div>
+    </section>
+
+    <section class="panel room-lighting">
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">Room equipment</p>
+                <h2>Lighting</h2>
+            </div>
+            <span><span data-room-field="total_lights"><%= room.total_lights %></span> active</span>
+        </div>
+
+        <div class="led-colour-card">
+            <span class="led-colour-swatch" data-reported-colour-swatch style="--led-colour: <%= lightColour.hex %>"></span>
+            <div>
+                <span>Reported LED colour</span>
+                <strong data-reported-colour-name><%= lightColour.name %></strong>
+                <small><span data-reported-colour-hex><%= lightColour.hex %></span> &middot; ID <span data-room-field="light_colour"><%= room.light_colour %></span></small>
+            </div>
+        </div>
+
+        <form class="lighting-control" data-lighting-form data-room-id="<%= activeRoomId %>">
+            <div class="lighting-control-heading">
+                <div>
+                    <span>Set LED colour</span>
+                    <strong><%= room.room || activeRoomId %></strong>
+                </div>
+                <small>Room ID: <%= activeRoomId %></small>
+            </div>
+            <div class="lighting-control-fields">
+                <span
+                    class="lighting-control-swatch"
+                    data-colour-preview
+                    style="--led-colour: <%= selectedLightColourData.hex %>"
+                ></span>
+                <label>
+                    <span class="sr-only">New lighting colour</span>
+                    <select name="value" data-colour-select>
+                        <% Object.entries(lightColours).forEach(([value, colour]) => { %>
+                            <% if (Number(value) >= 1 && Number(value) <= 11) { %>
+                                <option
+                                    value="<%= value %>"
+                                    data-hex="<%= colour.hex %>"
+                                    <%= Number(selectedLightColour) === Number(value) ? 'selected' : '' %>
+                                ><%= value %> - <%= colour.name %></option>
+                            <% } %>
+                        <% }) %>
+                    </select>
+                </label>
+                <button class="button lighting-control-button" type="submit">Apply</button>
+            </div>
+            <p class="lighting-control-status" data-lighting-status aria-live="polite"></p>
+        </form>
+
+        <dl class="lighting-list">
+            <div><dt>Long lights</dt><dd data-room-field="long_lights"><%= room.long_lights %></dd></div>
+            <div><dt>Round lights</dt><dd data-room-field="round_lights"><%= room.round_lights %></dd></div>
+            <div><dt>LED lights</dt><dd data-room-field="led_lights"><%= room.led_lights %></dd></div>
+        </dl>
+    </section>
+</div>
+
+<%- include('partials/page-end') %>

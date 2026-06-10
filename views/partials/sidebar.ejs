@@ -1,0 +1,59 @@
+<aside class="sidebar" id="sidebar">
+    <a class="brand" href="/">
+        <span class="brand-mark">S</span>
+        <span>
+            <strong>StationOS</strong>
+            <small>Operations console</small>
+        </span>
+    </a>
+
+    <nav class="nav" aria-label="Main navigation">
+        <a class="nav-link <%= activePage === 'dashboard' ? 'active' : '' %>" href="/">
+            <span class="nav-icon">&#9638;</span>
+            Overview
+        </a>
+
+        <div class="nav-group">
+            <button class="nav-link nav-dropdown-toggle <%= activePage === 'room' ? 'active' : '' %>" type="button" aria-expanded="<%= activePage === 'room' ? 'true' : 'false' %>" data-room-toggle>
+                <span class="nav-icon">&#9633;</span>
+                <span>Rooms</span>
+                <span class="chevron">&#8964;</span>
+            </button>
+            <div class="room-links <%= activePage === 'room' ? 'open' : '' %>" data-room-menu>
+                <% if (rooms.length === 0) { %>
+                    <span class="empty-nav">No rooms reported</span>
+                <% } %>
+                <% rooms.forEach((roomItem) => { %>
+                    <a class="<%= activeRoomId === roomItem.id ? 'active' : '' %>" href="/rooms/<%= encodeURIComponent(roomItem.id) %>">
+                        <span class="room-status <%= roomItem.hazard ? 'danger' : '' %>"></span>
+                        <%= roomItem.name %>
+                    </a>
+                <% }) %>
+            </div>
+        </div>
+
+        <p class="nav-label">Station systems</p>
+        <a class="nav-link <%= activePage === 'power' ? 'active' : '' %>" href="/power-generation">
+            <span class="nav-icon">&#9889;</span>
+            Power generation
+        </a>
+        <a class="nav-link <%= activePage === 'atmos' ? 'active' : '' %>" href="/atmos">
+            <span class="nav-icon">&#9673;</span>
+            Atmospherics
+        </a>
+        <a class="nav-link <%= activePage === 'weather' ? 'active' : '' %>" href="/weather">
+            <span class="nav-icon">&#9729;</span>
+            Weather
+        </a>
+        <a class="nav-link <%= activePage === 'manufacturing' ? 'active' : '' %>" href="/manufacturing">
+            <span class="nav-icon">&#9881;</span>
+            Manufacturing
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <span class="status-dot"></span>
+        <span><%= rooms.length %> room<%= rooms.length === 1 ? '' : 's' %> connected</span>
+    </div>
+</aside>
+<div class="sidebar-backdrop" data-menu-toggle></div>
