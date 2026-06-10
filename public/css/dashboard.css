@@ -607,6 +607,222 @@ button {
     text-align: right;
 }
 
+.power-charge-metric .power-charge-track {
+    margin: 12px 0 9px;
+}
+
+.power-detail-grid {
+    align-items: start;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(280px, 0.7fr) minmax(0, 1.8fr);
+}
+
+.power-turbine-panel {
+    overflow: hidden;
+}
+
+.turbine-visual {
+    align-items: center;
+    background: radial-gradient(circle at 50% 30%, rgba(56, 189, 248, 0.14), transparent 48%);
+    display: flex;
+    height: 210px;
+    justify-content: center;
+    margin: -8px 0 8px;
+    position: relative;
+}
+
+.turbine-mast {
+    background: linear-gradient(90deg, #687382, #c7d0da, #687382);
+    bottom: 12px;
+    clip-path: polygon(42% 0, 58% 0, 72% 100%, 28% 100%);
+    height: 120px;
+    position: absolute;
+    width: 34px;
+}
+
+.turbine-rotor {
+    height: 122px;
+    position: absolute;
+    top: 15px;
+    width: 122px;
+    z-index: 2;
+}
+
+.turbine-rotor.active {
+    animation: turbine-spin 5s linear infinite;
+}
+
+.turbine-rotor span {
+    background: linear-gradient(90deg, var(--blue), #d8f3ff);
+    border-radius: 70% 14% 70% 14%;
+    height: 48px;
+    left: 55px;
+    position: absolute;
+    top: 7px;
+    transform-origin: 6px 54px;
+    width: 13px;
+}
+
+.turbine-rotor span:nth-child(2) {
+    transform: rotate(120deg);
+}
+
+.turbine-rotor span:nth-child(3) {
+    transform: rotate(240deg);
+}
+
+.turbine-rotor i {
+    background: var(--panel-2);
+    border: 4px solid var(--blue);
+    border-radius: 50%;
+    height: 24px;
+    left: 49px;
+    position: absolute;
+    top: 49px;
+    width: 24px;
+    z-index: 3;
+}
+
+.power-reading-list {
+    margin-top: 8px;
+}
+
+.power-battery-section {
+    min-width: 0;
+}
+
+.power-section-heading {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding: 20px 22px;
+}
+
+.power-section-heading h2 {
+    margin: 5px 0 0;
+}
+
+.power-section-heading > span {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.battery-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.battery-card {
+    min-width: 0;
+}
+
+.battery-card-heading {
+    align-items: flex-start;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.battery-card-heading h3 {
+    font-size: 17px;
+    margin: 5px 0 0;
+    overflow-wrap: anywhere;
+}
+
+.battery-level-row {
+    align-items: center;
+    display: flex;
+    gap: 17px;
+    margin-bottom: 16px;
+}
+
+.battery-level-row strong,
+.battery-level-row span {
+    display: block;
+}
+
+.battery-level-row strong {
+    font-size: 30px;
+}
+
+.battery-level-row span {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 3px;
+}
+
+.battery-icon {
+    background: var(--panel-2);
+    border: 2px solid var(--muted);
+    border-radius: 5px;
+    display: flex;
+    flex: 0 0 auto;
+    height: 62px;
+    padding: 4px;
+    position: relative;
+    width: 38px;
+}
+
+.battery-icon::before {
+    background: var(--muted);
+    border-radius: 2px 2px 0 0;
+    content: "";
+    height: 5px;
+    left: 10px;
+    position: absolute;
+    top: -7px;
+    width: 14px;
+}
+
+.battery-icon span {
+    align-self: flex-end;
+    border-radius: 2px;
+    display: block;
+    width: 100%;
+}
+
+.battery-icon.green span { background: var(--green); }
+.battery-icon.amber span { background: var(--amber); }
+.battery-icon.red span { background: var(--red); }
+
+.battery-flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 16px;
+}
+
+.battery-flags span {
+    background: rgba(156, 163, 175, 0.08);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 5px 8px;
+    text-transform: uppercase;
+}
+
+.battery-flags span.active {
+    background: rgba(34, 197, 94, 0.08);
+    border-color: rgba(34, 197, 94, 0.25);
+    color: var(--green);
+}
+
+.battery-flags span.danger {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.25);
+    color: var(--red);
+}
+
+@keyframes turbine-spin {
+    to { transform: rotate(360deg); }
+}
+
 .led-colour-card {
     align-items: center;
     background: var(--panel-2);
@@ -977,6 +1193,10 @@ button {
     .weather-detail-grid {
         grid-template-columns: 1fr;
     }
+
+    .power-detail-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 760px) {
@@ -1044,6 +1264,10 @@ button {
     .room-grid {
         grid-template-columns: 1fr;
     }
+
+    .battery-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 520px) {
@@ -1064,7 +1288,8 @@ button {
 @media (prefers-reduced-motion: reduce) {
     .weather-orb,
     .weather-orb.sun::before,
-    .weather-star {
+    .weather-star,
+    .turbine-rotor.active {
         animation: none;
     }
 }

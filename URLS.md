@@ -36,6 +36,7 @@ The hash lookup accepts signed decimal values and hexadecimal CRC32 values.
 | Purpose | URL |
 | --- | --- |
 | Wind turbine telemetry | `/api/wind-turbine` |
+| Battery-bank telemetry | `/api/battery/:batteryId` |
 | Weather telemetry | `/api/weather` |
 | Room telemetry | `/api/room/:id` |
 | Set room lighting using `roomId` in the body | `/api/command/lighting` |
@@ -108,6 +109,45 @@ Day Time, Evening, Night Time, or Early Morning. The weather dashboard uses
   "turbineSpeed": 0.82
 }
 ```
+
+The power dashboard retains the raw output value for aggregate reporting and
+shows the formatted output, wind speed, turbine speed, and last report time.
+
+## Battery-Bank Telemetry
+
+`POST /api/battery/GenerationStorage`
+
+```json
+{
+  "batteryBankType": "Generation Battery Storage",
+  "batteryCount": 4,
+  "ratio": 0.72,
+  "charge": 7200000,
+  "maximum": 10000000,
+  "powerActual": 4200,
+  "powerPotential": 8000,
+  "powerDelta": -2800000,
+  "batteryCharged": 0,
+  "batteryEmpty": 0,
+  "error": 0
+}
+```
+
+The `batteryId` path value identifies the bank in the dashboard. Each bank is
+stored independently, so additional banks can post to URLs such as
+`/api/battery/BaseStorage`.
+
+The dashboard calculates:
+
+- Total stored energy and capacity across all banks
+- Aggregate station charge percentage
+- Charging, discharging, or idle state from consecutive charge readings
+- Full, high, normal, low, or critical charge level
+- Online, offline, and error status
+
+Charge direction uses a `1000 J` tolerance to prevent small reading changes
+from repeatedly changing the displayed state. The first reading is shown as
+idle because there is no previous sample to compare.
 
 ## Lighting Command
 

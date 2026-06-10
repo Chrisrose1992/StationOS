@@ -1,7 +1,10 @@
 const router = require('express').Router();
 
 const { getHashLookUp } = require('../controller/DataLookUp_controller');
-const { powerGeneration_windTurbine } = require('../controller/powerGeneration_controller');
+const {
+    powerGeneration_windTurbine,
+    powerGeneration_battery,
+} = require('../controller/powerGeneration_controller');
 const {
     getCommand,
     getRoomCommand,
@@ -9,6 +12,7 @@ const {
 } = require('../controller/command_controller');
 const {
     renderOverview,
+    renderPower,
     renderRoom,
     renderWeather,
     renderSystemPage,
@@ -22,14 +26,16 @@ const { weatherForecast } = require('../controller/weather_controller');
 
 router.get('/', renderOverview);
 router.get('/rooms/:id', renderRoom);
-router.get('/power-generation', renderSystemPage('power'));
+router.get('/power-generation', renderPower);
 router.get('/atmos', renderSystemPage('atmos'));
 router.get('/weather', renderWeather);
 router.get('/manufacturing', renderSystemPage('manufacturing'));
 
 router.get('/api/hash-lookup/:hash', getHashLookUp);
 
+// Power Generation
 router.post('/api/wind-turbine', powerGeneration_windTurbine);
+router.post('/api/battery/:batteryId', powerGeneration_battery);
 
 router.post('/api/weather', weatherForecast)
 

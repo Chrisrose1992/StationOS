@@ -24,7 +24,7 @@ function weatherForecast(req, res) {
     weather.horizontal = Number(data.horizontal || 0).toFixed(2);
     weather.vertical = Number(data.vertical || 0).toFixed(2);
     weather.timeOfDay = timeOfDay(Number(timeOfDayValue).toFixed(2));
-    weather.daysPast = Number(data.daysPast || 0);
+    weather.daysPast = Math.max(0, Number(data.daysPast || 0) - 1);
     weather.dayLengthSeconds = formatDuration(data.dayLengthSeconds);
     weather.solarIrradiance = Number(data.solarIrradiance || 0);
     weather.isEclipse = Number(data.isEclipse) === 1;

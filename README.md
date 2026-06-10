@@ -10,7 +10,7 @@ automation.
 
 ## Screenshots
 
-![StationOS dashboard](<Screenshots/Screenshot 2026-05-31 090425.png>)
+![StationOS dashboard](<Screenshots/Screenshot 2026-06-10 120143.png>)
 
 ![StationOS power monitoring](<Screenshots/Screenshot 2026-06-10 085505.png>)
 
@@ -39,9 +39,13 @@ automation.
 
 ### Power Monitoring
 
-- Wind turbine power output
-- Wind speed and turbine speed telemetry
-- Power generation dashboard shell for future devices
+- Live wind turbine output, wind speed, and turbine speed
+- Animated turbine with telemetry status
+- Multiple named battery banks
+- Aggregate stored energy, capacity, and station charge percentage
+- Battery charge level, health, and online status
+- Charging, discharging, and idle state detection
+- Actual power, potential power, and energy-deficit reporting
 
 ### Utilities
 
@@ -107,7 +111,7 @@ Set `SERVER_PORT` to use a different port.
 ```text
 controller/   Request handlers and telemetry processing
 helper/       Shared state, formatting, and dashboard data
-Lua Code/     Stationeers telemetry and command scripts
+Lua Code/     Weather, room, turbine, and battery telemetry scripts
 public/       Dashboard CSS and browser JavaScript
 routes/       Express page and API routes
 views/        EJS pages and shared partials

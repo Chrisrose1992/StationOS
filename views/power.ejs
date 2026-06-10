@@ -1,0 +1,194 @@
+<%- include('partials/page-start') %>
+
+<%
+    const updatedAt = summary.updatedAt
+        ? new Date(summary.updatedAt).toLocaleString('en-GB')
+        : 'Awaiting first report';
+    const chargeClass = summary.chargePercent < 15
+        ? 'red'
+        : summary.chargePercent < 40
+            ? 'amber'
+            : 'green';
+%>
+
+<section class="hero-panel">
+    <div>
+        <p class="eyebrow">Station energy</p>
+        <h2>Power generation</h2>
+        <p>Monitor wind generation and battery storage across the station.</p>
+    </div>
+    <div class="room-hero-status">
+        <% if (!summary.hasTelemetry) { %>
+            <span class="badge neutral">Awaiting telemetry</span>
+        <% } else if (summary.errorCount > 0) { %>
+            <span class="badge danger"><%= summary.errorCount %> battery error</span>
+        <% } else { %>
+            <span class="badge success">Power systems online</span>
+        <% } %>
+        <span class="live-status <%= summary.hasTelemetry ? 'connected' : '' %>">
+            <%= summary.hasTelemetry ? `Updated ${updatedAt}` : updatedAt %>
+        </span>
+    </div>
+</section>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <span class="metric-label">Wind generation</span>
+        <strong><%= summary.generatedPower %></strong>
+        <span class="metric-note">Current turbine output</span>
+    </article>
+
+    <article class="metric-card">
+        <span class="metric-label">Stored energy</span>
+        <strong><%= summary.storedEnergy %></strong>
+        <span class="metric-note">Across all battery banks</span>
+    </article>
+
+    <article class="metric-card">
+        <span class="metric-label">Battery capacity</span>
+        <strong><%= summary.totalCapacity %></strong>
+        <span class="metric-note"><%= summary.batteryCount %> connected batteries</span>
+    </article>
+
+    <article class="metric-card power-charge-metric">
+        <span class="metric-label">Station charge</span>
+        <strong><%= summary.chargePercent.toFixed(1) %>%</strong>
+        <div class="progress-track power-charge-track">
+            <span class="<%= chargeClass %>" style="width: <%= summary.chargePercent %>%"></span>
+        </div>
+        <span class="metric-note"><%= summary.bankCount %> reporting banks</span>
+    </article>
+</section>
+
+<section class="power-detail-grid">
+    <article class="panel power-turbine-panel">
+        <div class="panel-heading">
+            <h2>Wind turbine</h2>
+            <span><%= turbine.updatedAt ? 'Live telemetry' : 'Awaiting telemetry' %></span>
+        </div>
+
+        <div class="turbine-visual" aria-hidden="true">
+            <div class="turbine-rotor <%= turbine.updatedAt ? 'active' : '' %>">
+                <span></span>
+                <span></span>
+                <span></span>
+                <i></i>
+            </div>
+            <div class="turbine-mast"></div>
+        </div>
+
+        <dl class="weather-reading-list power-reading-list">
+            <div>
+                <dt>Power output</dt>
+                <dd><%= turbine.powerOutput %></dd>
+            </div>
+            <div>
+                <dt>Wind speed</dt>
+                <dd><%= turbine.windSpeed %></dd>
+            </div>
+            <div>
+                <dt>Turbine speed</dt>
+                <dd><%= turbine.turbineSpeed %></dd>
+            </div>
+            <div>
+                <dt>Last report</dt>
+                <dd>
+                    <%= turbine.updatedAt
+                        ? new Date(turbine.updatedAt).toLocaleString('en-GB')
+                        : 'Never' %>
+                </dd>
+            </div>
+        </dl>
+    </article>
+
+    <section class="power-battery-section">
+        <div class="panel power-section-heading">
+            <div>
+                <p class="eyebrow">Energy storage</p>
+                <h2>Battery banks</h2>
+            </div>
+            <span><%= summary.bankCount %> reporting</span>
+        </div>
+
+        <% if (batteries.length === 0) { %>
+            <article class="panel empty-state compact">
+                <span class="empty-state-icon">BAT</span>
+                <h2>No battery telemetry yet</h2>
+                <p>Battery banks will appear after posting to `/api/battery/:batteryId`.</p>
+            </article>
+        <% } else { %>
+            <div class="battery-grid">
+                <% batteries.forEach((battery) => {
+                    const ratio = Math.min(100, Math.max(0, Number(battery.ratioRaw || 0) * 100));
+                    const batteryClass = battery.error
+                        ? 'danger'
+                        : battery.status === 'Online'
+                            ? 'success'
+                            : 'neutral';
+                    const levelClass = ratio < 15 ? 'red' : ratio < 40 ? 'amber' : 'green';
+                %>
+                    <article class="panel battery-card">
+                        <div class="battery-card-heading">
+                            <div>
+                                <span class="metric-label"><%= battery.id %></span>
+                                <h3><%= battery.battery_bank_location %></h3>
+                            </div>
+                            <span class="badge <%= batteryClass %>"><%= battery.status %></span>
+                        </div>
+
+                        <div class="battery-level-row">
+                            <div class="battery-icon <%= levelClass %>" aria-hidden="true">
+                                <span style="height: <%= ratio %>%"></span>
+                            </div>
+                            <div>
+                                <strong><%= battery.ratio %></strong>
+                                <span><%= battery.level %> charge</span>
+                            </div>
+                        </div>
+
+                        <div class="progress-track">
+                            <span class="<%= levelClass %>" style="width: <%= ratio %>%"></span>
+                        </div>
+
+                        <dl class="weather-reading-list power-reading-list">
+                            <div>
+                                <dt>Charge state</dt>
+                                <dd><%= battery.chargeStatus %></dd>
+                            </div>
+                            <div>
+                                <dt>Stored / capacity</dt>
+                                <dd><%= battery.charge %> / <%= battery.maximum %></dd>
+                            </div>
+                            <div>
+                                <dt>Actual power</dt>
+                                <dd><%= battery.powerActual %></dd>
+                            </div>
+                            <div>
+                                <dt>Potential power</dt>
+                                <dd><%= battery.powerPotential %></dd>
+                            </div>
+                            <div>
+                                <dt>Energy deficit</dt>
+                                <dd><%= battery.energyDeficit %></dd>
+                            </div>
+                            <div>
+                                <dt>Battery count</dt>
+                                <dd><%= battery.count %></dd>
+                            </div>
+                        </dl>
+
+                        <div class="battery-flags">
+                            <span class="<%= battery.charged ? 'active' : '' %>">Charged</span>
+                            <span class="<%= battery.empty ? 'danger' : '' %>">Empty</span>
+                            <span class="<%= battery.error ? 'danger' : 'active' %>">
+                                <%= battery.error ? 'Error' : 'Healthy' %>
+                            </span>
+                        </div>
+                    </article>
+                <% }) %>
+            </div>
+        <% } %>
+    </section>
+</section>
+
+<%- include('partials/page-end') %>

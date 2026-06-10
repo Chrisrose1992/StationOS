@@ -74,6 +74,31 @@ Device slots:
 | 1 | Turbine speed |
 | 2 | Power output |
 
+### `battery.lua`
+
+Posts battery-bank telemetry to `/api/battery/GenerationStorage` every five
+seconds. Change `GenerationStorage` in the URL and `batteryBankType` in the
+payload when creating another independently tracked bank.
+
+The script batch-reads every large station battery and reports:
+
+- Battery count
+- Average charge ratio
+- Total stored charge and maximum capacity
+- Actual and potential power
+- Charged, empty, and error states
+
+Logic reader slots:
+
+| Slot | Reading |
+| --- | --- |
+| 0 | Energy or power deficit |
+| 1 | Battery charged state |
+| 2 | Battery empty state |
+
+StationOS compares each total charge reading with the previous report to show
+whether the bank is charging, discharging, or idle.
+
 ## Setup
 
 1. Start StationOS with `npm start`.

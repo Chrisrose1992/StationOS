@@ -9,6 +9,10 @@ const {
     getRooms,
     getSystemPage,
 } = require('../helper/dashboard_helper');
+const {
+    formatEnergy,
+    formatPower,
+} = require('../helper/format_helper');
 
 function renderOverview(req, res) {
     const rooms = getRooms();
@@ -50,6 +54,50 @@ function renderWeather(req, res) {
     }));
 }
 
+function renderPower(req, res) {
+    const power = stationState.power_monitor;
+    const batteries = Object.values(power.battery);
+    const totalCharge = batteries.reduce(
+        (total, battery) => total + Number(battery.chargeRaw || 0),
+        0,
+    );
+    const totalCapacity = batteries.reduce(
+        (total, battery) => total + Number(battery.maximumRaw || 0),
+        0,
+    );
+    const batteryCount = batteries.reduce(
+        (total, battery) => total + Number(battery.count || 0),
+        0,
+    );
+    const chargePercent = totalCapacity > 0
+        ? Math.min(100, Math.max(0, (totalCharge / totalCapacity) * 100))
+        : 0;
+    const reportTimes = [
+        power.wind_turbine.updatedAt,
+        ...batteries.map((battery) => battery.updatedAt),
+    ].filter(Boolean);
+    const updatedAt = reportTimes.length > 0
+        ? new Date(Math.max(...reportTimes.map((value) => new Date(value).getTime())))
+            .toISOString()
+        : null;
+
+    return res.render('power', createPageData('Power Generation', 'power', {
+        turbine: power.wind_turbine,
+        batteries,
+        summary: {
+            hasTelemetry: Boolean(updatedAt),
+            updatedAt,
+            generatedPower: formatPower(power.wind_turbine.powerOutputRaw),
+            storedEnergy: formatEnergy(totalCharge),
+            totalCapacity: formatEnergy(totalCapacity),
+            chargePercent,
+            batteryCount,
+            bankCount: batteries.length,
+            errorCount: batteries.filter((battery) => battery.error).length,
+        },
+    }));
+}
+
 function renderSystemPage(pageId) {
     return (req, res) => {
         const page = getSystemPage(pageId);
@@ -63,6 +111,7 @@ function renderSystemPage(pageId) {
 
 module.exports = {
     renderOverview,
+    renderPower,
     renderRoom,
     renderWeather,
     renderSystemPage,

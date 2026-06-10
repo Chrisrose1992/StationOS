@@ -108,6 +108,74 @@ function timeOfDay(value) {
     return "Early Morning";
 }
 
+function formatEnergy(value) {
+    const energy = Number(value || 0);
+
+    if (energy >= 1000000) {
+        return `${(energy / 1000000).toFixed(2)} MJ`;
+    }
+
+    if (energy >= 1000) {
+        return `${(energy / 1000).toFixed(2)} kJ`;
+    }
+
+    return `${energy.toFixed(0)} J`;
+}
+
+function formatEnergyDeficit(delta) {
+
+    const value = Math.abs(Number(delta || 0));
+
+    if (value >= 1000000) {
+        return `${(value / 1000000).toFixed(2)} MJ`;
+    }
+
+    if (value >= 1000) {
+        return `${(value / 1000).toFixed(2)} kJ`;
+    }
+
+    return `${value.toFixed(0)} J`;
+}
+
+function batteryLevel(ratio) {
+
+    const value = Number(ratio || 0);
+
+    if (value >= 0.99)
+        return "Full";
+
+    if (value >= 0.75)
+        return "High";
+
+    if (value >= 0.40)
+        return "Normal";
+
+    if (value >= 0.15)
+        return "Low";
+
+    return "Critical";
+}
+
+function batteryStatus(error, count) {
+    if (Number(error) === 1)
+        return "Error";
+
+    if (Number(count || 0) <= 0)
+        return "Offline";
+
+    return "Online";
+}
+
+function chargeState(previousCharge, currentCharge) {
+    if (currentCharge > previousCharge + 1000) {
+        return "Charging";
+    } else if (currentCharge < previousCharge - 1000) {
+        return "Discharging";
+    } else {
+        return "Idle";
+    }
+}
+
 module.exports = {
     formatPressure,
     kelvinToCelsius,
@@ -117,5 +185,10 @@ module.exports = {
     formatMols,
     updatePowerNet,
     formatPercent,
-    timeOfDay
+    timeOfDay,
+    formatEnergy,
+    formatEnergyDeficit,
+    batteryLevel,
+    batteryStatus,
+    chargeState,
 };

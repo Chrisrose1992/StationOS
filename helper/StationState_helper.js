@@ -19,6 +19,33 @@ function createRoomState(name = "") {
     };
 }
 
+function createBatteryState(name = "") {
+    return {
+        id: name,
+        battery_bank_location: name,
+        status: "Unknown",
+        chargeStatus: "Unknown",
+        count: 0,
+        ratioRaw: 0,
+        ratio: "0%",
+        level: "Unknown",
+        chargeRaw: 0,
+        charge: "0 J",
+        maximumRaw: 0,
+        maximum: "0 J",
+        powerActualRaw: 0,
+        powerActual: "0 W",
+        powerPotentialRaw: 0,
+        powerPotential: "0 W",
+        energyDeficitRaw: 0,
+        energyDeficit: "0 J",
+        charged: false,
+        empty: false,
+        error: false,
+        updatedAt: null,
+    };
+}
+
 const lightColours = {
     0: { name: "Blue", hex: "#212AA5" },
     1: { name: "Gray", hex: "#7B7B7B" },
@@ -56,10 +83,13 @@ const stationState = {
 
     power_monitor: {
         wind_turbine: {
-            powerOutput: 0,
-            windSpeed: 0,
-            turbineSpeed: 0,
-        }
+            powerOutputRaw: 0,
+            powerOutput: "0 W",
+            windSpeed: "0.0%",
+            turbineSpeed: "0.0%",
+            updatedAt: null,
+        },
+        battery: {},
     },
 
     weather_monitor: {
@@ -91,4 +121,5 @@ module.exports = {
     getLightColour,
     lightColours,
     stationState,
+    createBatteryState,
 };
