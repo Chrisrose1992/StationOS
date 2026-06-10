@@ -1,0 +1,5 @@
+# Native Linux only. Docker Desktop for Windows does not expose Intel GPUs.
+services:
+  app:
+    devices:
+      - /dev/dri:/dev/dri

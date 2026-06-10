@@ -116,10 +116,57 @@ const stationState = {
     },
 };
 
+function restoreStationState(events) {
+    const restored = {
+        batteries: 0,
+        rooms: 0,
+        weather: 0,
+        windTurbines: 0,
+    };
+
+    for (const event of events) {
+        const payload = event.payload || {};
+
+        switch (event.source_type) {
+            case 'room':
+                stationState.rooms[event.source_id] = {
+                    ...createRoomState(event.source_id),
+                    ...payload,
+                };
+                restored.rooms += 1;
+                break;
+            case 'battery':
+                stationState.power_monitor.battery[event.source_id] = {
+                    ...createBatteryState(event.source_id),
+                    ...payload,
+                };
+                restored.batteries += 1;
+                break;
+            case 'weather':
+                Object.assign(stationState.weather_monitor, payload);
+                stationState.command.weather.isNight =
+                    stationState.weather_monitor.isNight !== 'Day Time';
+                stationState.command.weather.isStorm =
+                    [1, 2].includes(Number(stationState.weather_monitor.weather_mode));
+                restored.weather += 1;
+                break;
+            case 'wind_turbine':
+                Object.assign(stationState.power_monitor.wind_turbine, payload);
+                restored.windTurbines += 1;
+                break;
+            default:
+                break;
+        }
+    }
+
+    return restored;
+}
+
 module.exports = {
     createRoomState,
     getLightColour,
     lightColours,
+    restoreStationState,
     stationState,
     createBatteryState,
 };

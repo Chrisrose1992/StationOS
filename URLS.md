@@ -6,6 +6,9 @@ Default server:
 http://127.0.0.1:5000
 ```
 
+All telemetry and lighting request bodies use
+`Content-Type: application/json`.
+
 ## Dashboard Pages
 
 | Page | Method | URL |
@@ -30,6 +33,8 @@ telemetry sent to `/api/room/Corridor` creates the page `/rooms/Corridor`.
 | Stationeers hash lookup | `/api/hash-lookup/:hash` |
 
 The hash lookup accepts signed decimal values and hexadecimal CRC32 values.
+Unknown rooms return `404`; invalid hashes return `400`, and hashes that are
+valid but absent from the lookup return `404`.
 
 ## POST API
 
@@ -161,6 +166,33 @@ idle because there is no previous sample to compare.
 
 The lighting value must be an integer from `1` through `11`.
 
+The body-based variant is:
+
+`POST /api/command/lighting`
+
+```json
+{
+  "roomId": "Corridor",
+  "value": 11
+}
+```
+
+Both lighting endpoints return the selected colour:
+
+```json
+{
+  "success": true,
+  "room": {
+    "id": "Corridor",
+    "lightColour": 11,
+    "colour": {
+      "name": "Purple",
+      "hex": "#732CA7"
+    }
+  }
+}
+```
+
 ## Command Response
 
 `GET /api/command/Corridor`
@@ -181,3 +213,20 @@ The lighting value must be an integer from `1` through `11`.
   }
 }
 ```
+
+`GET /api/command` returns only the global `weather` object. A room command may
+return `null` for `lightColour` and `colour` until a dashboard lighting command
+has been set.
+
+## Telemetry Responses
+
+Successful telemetry posts return HTTP `200` with `success: true` and the
+normalized state used by the dashboard. Pressure, temperature, energy, power,
+percentages, and timestamps may therefore differ in representation from the
+raw request.
+
+When `DATABASE_URL` is configured, each weather, room, wind-turbine, and
+battery post is also appended to the `telemetry_events` TimescaleDB hypertable.
+On startup, StationOS restores the newest event for every source type and
+source ID. Without `DATABASE_URL`, the same API remains available but state is
+kept only in memory.

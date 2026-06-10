@@ -2,5 +2,13 @@
 </div>
 </div>
 <script src="/js/dashboard.js"></script>
+<% if (liveReload) { %>
+<script>
+    document.write(
+        '<script src="//' + window.location.hostname
+        + ':35729/livereload.js?snipver=1"></' + 'script>'
+    );
+</script>
+<% } %>
 </body>
 </html>

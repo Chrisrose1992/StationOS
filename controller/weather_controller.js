@@ -1,4 +1,5 @@
 const { stationState } = require('../helper/stationState_helper');
+const { recordTelemetry } = require('../helper/database_helper');
 
 const { formatDuration, weatherStatus, formatPressure, kelvinToCelsius, timeOfDay } = require('../helper/format_helper');
 
@@ -33,6 +34,8 @@ function weatherForecast(req, res) {
 
     stationState.command.weather.isNight = !isDay;
     stationState.command.weather.isStorm = weatherMode === 2 || weatherMode === 1;
+
+    recordTelemetry('weather', 'station', weather, weather.updatedAt);
 
     //console.table(weather);
 

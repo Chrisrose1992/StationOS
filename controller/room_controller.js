@@ -8,6 +8,7 @@ const {
     getLightColour,
     stationState,
 } = require('../helper/stationState_helper');
+const { recordTelemetry } = require('../helper/database_helper');
 
 function updateRoom(roomId, data) {
     if(!stationState.rooms[roomId]) {
@@ -71,6 +72,7 @@ function updateRoomTelemetry(req, res) {
     const data = req.body;
 
     const roomData = updateRoom(roomId, data);
+    recordTelemetry('room', roomId, roomData, roomData.updatedAt);
 
     return res.status(200).json({ success: true, room: roomData });
 }

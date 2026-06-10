@@ -10,7 +10,9 @@ http://127.0.0.1:5000
 ```
 
 Change each script's `httpServer` or `commandServer` when the Node.js server
-runs on another host or port.
+runs on another host or port. `127.0.0.1` refers to the machine running
+Stationeers, so use the StationOS host's LAN address when the server runs on a
+different computer.
 
 ## Scripts
 
@@ -50,6 +52,10 @@ The script reports:
 - Gas composition
 - Hazard state
 - Light counts and LED colour
+
+It batch-reads room gas sensors and each supported light type. Normal lights
+follow occupancy, while LED lights indicate storms or hazardous gases in red
+and otherwise use the colour selected from the dashboard.
 
 The command response provides:
 
@@ -101,11 +107,17 @@ whether the bank is charging, discharging, or idle.
 
 ## Setup
 
-1. Start StationOS with `npm start`.
+1. Start StationOS with `npm start`, `npm run dev`, or Docker Compose.
 2. Load the required script into an in-game IC housing.
 3. Assign devices and logic readers to the slots documented above.
 4. Update the server URL if Stationeers cannot reach `127.0.0.1`.
 5. Open the matching dashboard page and confirm telemetry is updating.
 
-Telemetry is stored only in server memory. Restarting StationOS clears the
-latest weather, room, and power readings.
+With the Docker Compose setup, telemetry is written to TimescaleDB and the
+latest reading for each source is restored when StationOS starts. A native
+`npm start` or `npm run dev` session without `DATABASE_URL` keeps telemetry
+only in memory, so restarting that process clears the current readings.
+
+For dashboard development, `npm run dev` also restarts the server after backend
+changes and reloads open browser pages after server, EJS, CSS, or browser
+JavaScript changes.

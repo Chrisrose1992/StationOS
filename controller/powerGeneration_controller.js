@@ -1,4 +1,5 @@
 const { stationState, createBatteryState } = require('../helper/stationState_helper');
+const { recordTelemetry } = require('../helper/database_helper');
 const {
     formatPower,
     formatEnergy,
@@ -18,6 +19,13 @@ function powerGeneration_windTurbine(req, res) {
     windTurbine.windSpeed = `${(Number(data.windSpeed) * 100).toFixed(1)}%`;
     windTurbine.turbineSpeed = `${(Number(data.turbineSpeed) * 100).toFixed(1)}%`;
     windTurbine.updatedAt = new Date().toISOString();
+
+    recordTelemetry(
+        'wind_turbine',
+        'station',
+        windTurbine,
+        windTurbine.updatedAt
+    );
 
     return res.status(200).json({ success: true, windTurbine });
 }
@@ -64,6 +72,7 @@ function updateBatteryState(batteryId, data) {
 function powerGeneration_battery(req, res) {
     const batteryId = req.params.batteryId;
     const battery = updateBatteryState(batteryId, req.body || {});
+    recordTelemetry('battery', batteryId, battery, battery.updatedAt);
 
     return res.status(200).json({ success: true, battery });
 }

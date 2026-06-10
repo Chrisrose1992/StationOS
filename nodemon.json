@@ -6,8 +6,7 @@
     "helper/",
     "middleware/",
     "routes/",
-    "utils/",
-    "views/"
+    "utils/"
   ],
   "ignore": [
     "node_modules/",
@@ -17,7 +16,10 @@
     "Lua Code/",
     "public/"
   ],
-  "ext": "js,json,ejs",
+  "ext": "js,json",
   "exec": "node server.js",
-  "delay": "1000"
+  "delay": "1000",
+  "env": {
+    "NODE_ENV": "development"
+  }
 }
