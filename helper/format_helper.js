@@ -1,14 +1,25 @@
 function formatPressure(p) {
+    const pressure = Number(p);
 
-    if (p >= 1000)
-        return `${(p / 1000).toFixed(2)} MPa`;
+    if (!Number.isFinite(pressure)) {
+        return "Not reported";
+    }
 
-    return `${p.toFixed(1)} kPa`;
+    if (pressure >= 1000)
+        return `${(pressure / 1000).toFixed(2)} MPa`;
+
+    return `${pressure.toFixed(1)} kPa`;
 
 }
 
 function kelvinToCelsius(kelvin) {
-    return Number((Number(kelvin || 0) - 273).toFixed(2));
+    const temperature = Number(kelvin);
+
+    if (!Number.isFinite(temperature)) {
+        return null;
+    }
+
+    return Number((temperature - 273.15).toFixed(2));
 }
 
 function weatherStatus(mode) {

@@ -3,6 +3,7 @@ function createRoomState(name = "") {
         room: name,
         occupied: false,
         pressure: 0,
+        pressureRaw: 0,
         temperature: 0,
         oxygen: 0,
         nitrogen: 0,
@@ -15,6 +16,7 @@ function createRoomState(name = "") {
         round_lights: 0,
         led_lights: 0,
         total_lights: 0,
+        reportedFields: [],
         updatedAt: null,
     };
 }
@@ -23,6 +25,7 @@ function createBatteryState(name = "") {
     return {
         id: name,
         battery_bank_location: name,
+        bankRole: "storage",
         status: "Unknown",
         chargeStatus: "Unknown",
         count: 0,
@@ -42,6 +45,7 @@ function createBatteryState(name = "") {
         charged: false,
         empty: false,
         error: false,
+        reportedFields: [],
         updatedAt: null,
     };
 }
@@ -87,6 +91,7 @@ const stationState = {
             powerOutput: "0 W",
             windSpeed: "0.0%",
             turbineSpeed: "0.0%",
+            reportedFields: [],
             updatedAt: null,
         },
         battery: {},
@@ -97,9 +102,9 @@ const stationState = {
         weather_event: "",
         nextEvent_raw: 0,
         nextEvent: "",
-        nextWeatherHash: 0,
+        nextWeatherHash: null,
         windStrength: "",
-        weather_error: false,
+        weather_error: null,
         daysSinceLastEvent: "",
         outsidePressure: "",
         outsideTemperature: 0,
@@ -107,11 +112,13 @@ const stationState = {
         horizontal: "",
         vertical: "",
         timeOfDay: "",
+        timeOfDayRaw: 0,
         daysPast: 0,
         dayLengthSeconds: "",
         solarIrradiance: 0,
         isEclipse: false,
         weatherSolarRatio: 0,
+        reportedFields: [],
         updatedAt: null,
     },
 };
@@ -144,10 +151,10 @@ function restoreStationState(events) {
                 break;
             case 'weather':
                 Object.assign(stationState.weather_monitor, payload);
-                stationState.command.weather.isNight =
-                    stationState.weather_monitor.isNight !== 'Day Time';
-                stationState.command.weather.isStorm =
-                    [1, 2].includes(Number(stationState.weather_monitor.weather_mode));
+                if (!Array.isArray(payload.reportedFields)) {
+                    stationState.weather_monitor.nextWeatherHash = null;
+                    stationState.weather_monitor.weather_error = null;
+                }
                 restored.weather += 1;
                 break;
             case 'wind_turbine':

@@ -1,19 +1,33 @@
 <%- include('partials/page-start') %>
 
-<section class="hero-panel">
+<section
+    class="hero-panel"
+    data-dashboard-live
+    data-dashboard-token="<%= liveToken %>"
+>
     <div>
         <p class="eyebrow">Live station summary</p>
         <h2>Operations overview</h2>
         <p>Monitor connected rooms and station systems from one control surface.</p>
     </div>
-    <span class="badge success">Nominal</span>
+    <div class="room-hero-status">
+        <span class="badge <%= alertCount > 0 ? 'warning' : 'success' %>">
+            <%= alertCount > 0 ? `${alertCount} active alert${alertCount === 1 ? '' : 's'}` : 'Nominal' %>
+        </span>
+        <span class="live-status connected" data-dashboard-status>Live updates connected</span>
+    </div>
 </section>
 
 <section class="metric-grid">
     <article class="metric-card">
-        <span class="metric-label">Connected rooms</span>
+        <span class="metric-label">Known rooms</span>
         <strong><%= rooms.length %></strong>
-        <span class="metric-note">Reporting to StationOS</span>
+        <span class="metric-note">Registered from telemetry</span>
+    </article>
+    <article class="metric-card">
+        <span class="metric-label">Stale rooms</span>
+        <strong class="<%= staleRoomCount > 0 ? 'text-amber' : 'text-green' %>"><%= staleRoomCount %></strong>
+        <span class="metric-note"><%= staleRoomCount > 0 ? 'Telemetry update required' : 'All room reports live' %></span>
     </article>
     <article class="metric-card">
         <span class="metric-label">Room hazards</span>
@@ -22,13 +36,71 @@
     </article>
     <article class="metric-card">
         <span class="metric-label">Weather</span>
-        <strong class="metric-word"><%= weather.isStorm ? 'Storm' : 'Clear' %></strong>
-        <span class="metric-note"><%= weather.isNight ? 'Night cycle' : 'Day cycle' %></span>
+        <strong class="metric-word <%= weather.stale ? 'text-amber' : weather.isStorm ? 'text-red' : 'text-green' %>">
+            <%= weather.stale ? 'Stale' : weather.isStorm ? 'Storm' : 'Clear' %>
+        </strong>
+        <span class="metric-note">
+            <%= weather.stale
+                ? 'Automation failsafe active'
+                : weather.isNight
+                    ? 'Night cycle'
+                    : 'Day cycle' %>
+        </span>
     </article>
-    <article class="metric-card">
-        <span class="metric-label">Station status</span>
-        <strong class="metric-word text-green">Online</strong>
-        <span class="metric-note">Receiving telemetry</span>
+</section>
+
+<section class="operations-grid">
+    <article class="panel event-timeline-panel" data-event-timeline>
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">Station activity</p>
+                <h2>Event timeline</h2>
+            </div>
+            <span data-event-summary>Loading events...</span>
+        </div>
+        <div class="event-timeline" data-event-list aria-live="polite">
+            <div class="timeline-empty">Loading station events...</div>
+        </div>
+    </article>
+
+    <article class="panel trend-panel">
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">Telemetry history</p>
+                <h2>Trend graphs</h2>
+            </div>
+            <span>Last 6 hours</span>
+        </div>
+        <div class="trend-grid">
+            <div class="trend-card" data-trend-chart data-series="battery_charge" data-source-id="<%= trendSources.battery || '' %>" data-unit="%">
+                <div><strong>Battery charge</strong><span data-trend-value>--</span></div>
+                <svg viewBox="0 0 320 110" preserveAspectRatio="none" role="img" aria-label="Battery charge trend">
+                    <path data-trend-area></path><path data-trend-line></path>
+                </svg>
+                <small><%= trendSources.battery || 'No battery source' %></small>
+            </div>
+            <div class="trend-card" data-trend-chart data-series="solar_output" data-unit=" W/m²">
+                <div><strong>Solar output</strong><span data-trend-value>--</span></div>
+                <svg viewBox="0 0 320 110" preserveAspectRatio="none" role="img" aria-label="Solar output trend">
+                    <path data-trend-area></path><path data-trend-line></path>
+                </svg>
+                <small>Weather station</small>
+            </div>
+            <div class="trend-card" data-trend-chart data-series="wind_power" data-unit=" W">
+                <div><strong>Wind power</strong><span data-trend-value>--</span></div>
+                <svg viewBox="0 0 320 110" preserveAspectRatio="none" role="img" aria-label="Wind power trend">
+                    <path data-trend-area></path><path data-trend-line></path>
+                </svg>
+                <small>Wind turbine</small>
+            </div>
+            <div class="trend-card" data-trend-chart data-series="room_pressure" data-source-id="<%= trendSources.room || '' %>" data-unit=" kPa">
+                <div><strong>Room pressure</strong><span data-trend-value>--</span></div>
+                <svg viewBox="0 0 320 110" preserveAspectRatio="none" role="img" aria-label="Room pressure trend">
+                    <path data-trend-area></path><path data-trend-line></path>
+                </svg>
+                <small><%= trendSources.room || 'No room source' %></small>
+            </div>
+        </div>
     </article>
 </section>
 
@@ -53,14 +125,21 @@
                 <a class="room-card" href="/rooms/<%= encodeURIComponent(room.id) %>">
                     <div class="room-card-heading">
                         <div>
-                            <span class="room-status <%= room.hazard ? 'danger' : '' %>"></span>
+                            <span class="room-status <%= room.hazard ? 'danger' : !room.isFresh ? 'stale' : '' %>"></span>
                             <strong><%= room.name %></strong>
                         </div>
-                        <span class="badge <%= room.hazard ? 'danger' : 'success' %>"><%= room.hazard ? 'Hazard' : 'Safe' %></span>
+                        <span class="badge <%= room.hazard ? 'danger' : room.isFresh ? 'success' : 'warning' %>">
+                            <%= room.hazard ? 'Hazard' : room.isFresh ? 'Live' : 'Stale' %>
+                        </span>
                     </div>
                     <dl class="room-readings">
                         <div><dt>Pressure</dt><dd><%= room.pressure %></dd></div>
-                        <div><dt>Temperature</dt><dd><%= room.temperature %>&deg;C</dd></div>
+                        <div>
+                            <dt>Temperature</dt>
+                            <dd>
+                                <%= room.temperature === null ? 'Not reported' : room.temperature %><% if (room.temperature !== null) { %>&deg;C<% } %>
+                            </dd>
+                        </div>
                         <div><dt>Oxygen</dt><dd><%= room.oxygen %>%</dd></div>
                         <div><dt>Occupancy</dt><dd><%= room.occupied ? 'Occupied' : 'Empty' %></dd></div>
                         <div><dt>Lights</dt><dd><%= room.total_lights %></dd></div>

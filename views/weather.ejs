@@ -2,32 +2,73 @@
 
 <%
     const hasTelemetry = Boolean(weather.updatedAt);
-    const isStorm = weather.weather_mode === 1 || weather.weather_mode === 2;
+    const isStorm = isWeatherFresh
+        && (weather.weather_mode === 1 || weather.weather_mode === 2);
     const isNightCycle = String(weather.isNight).toLowerCase().includes('night');
+    const weatherIcon = isStorm ? 'storm' : isNightCycle ? 'moon' : 'sun';
+    const cyclePosition = Math.min(1, Math.max(0, Number(weather.timeOfDayRaw || 0)));
+    const cyclePercent = Number((cyclePosition * 100).toFixed(2));
+    const solarBearing = Number(
+        ((((Number(weather.horizontal || 0) % 360) + 360) % 360)).toFixed(2),
+    );
+    const solarElevation = Math.min(90, Math.max(-90, Number(weather.vertical || 0)));
+    const elevationPercent = Number(
+        ((((solarElevation + 90) / 180) * 100)).toFixed(2),
+    );
+    const solarEfficiency = Math.min(
+        100,
+        Math.max(0, Number(weather.weatherSolarRatio || 0) * 100),
+    );
+    const nextEventSeconds = Math.max(0, Number(weather.nextEvent_raw || 0));
+    const stormUrgency = isStorm
+        ? 100
+        : Math.min(100, Math.max(0, 100 - ((nextEventSeconds / 600) * 100)));
+    const clockAngle = Number((cyclePosition * 360).toFixed(2));
+    const sunPathAngle = cyclePosition * Math.PI;
+    const sunPathX = Number(
+        (50 - (Math.cos(sunPathAngle) * 42)).toFixed(2),
+    );
+    const sunPathY = Number(
+        (82 - (Math.sin(sunPathAngle) * 64)).toFixed(2),
+    );
+    const timePhase = String(weather.timeOfDay || 'unknown')
+        .toLowerCase()
+        .replace(/\s+/g, '-');
     const solarRatio = `${(Number(weather.weatherSolarRatio || 0) * 100).toFixed(1)}%`;
     const updatedAt = hasTelemetry
         ? new Date(weather.updatedAt).toLocaleString('en-GB')
         : 'Awaiting first report';
 %>
 
-<section class="hero-panel">
+<section
+    class="hero-panel"
+    data-weather-live
+    data-weather-updated-at="<%= weather.updatedAt || '' %>"
+    data-weather-fresh="<%= isWeatherFresh %>"
+>
     <div>
         <p class="eyebrow">External conditions</p>
         <h2>Weather monitoring</h2>
-        <p>Live daylight, storm, atmospheric and solar telemetry.</p>
+        <p>Live time-of-day, storm, atmospheric and solar telemetry.</p>
     </div>
     <div class="room-hero-status">
         <% if (!hasTelemetry) { %>
             <span class="badge neutral">Awaiting telemetry</span>
-        <% } else if (weather.weather_error) { %>
+        <% } else if (!isWeatherFresh) { %>
+            <span class="badge danger">Telemetry stale</span>
+        <% } else if (weather.weather_error === true) { %>
             <span class="badge danger">Sensor error</span>
         <% } else if (isStorm) { %>
             <span class="badge danger"><%= weather.weather_event %></span>
         <% } else { %>
             <span class="badge success"><%= weather.weather_event || 'Clear' %></span>
         <% } %>
-        <span class="live-status <%= hasTelemetry ? 'connected' : '' %>">
-            <%= hasTelemetry ? `Updated ${updatedAt}` : updatedAt %>
+        <span class="live-status <%= isWeatherFresh ? 'connected' : hasTelemetry ? 'error' : '' %>" data-live-status>
+            <%= !hasTelemetry
+                ? updatedAt
+                : isWeatherFresh
+                    ? `Live - updated ${updatedAt}`
+                    : `Last report ${updatedAt}` %>
         </span>
     </div>
 </section>
@@ -35,23 +76,37 @@
 <section class="metric-grid">
     <article class="metric-card">
         <span class="metric-label">Weather status</span>
-        <strong class="metric-word <%= isStorm ? 'text-red' : 'text-green' %>">
-            <%= weather.weather_event || 'Unknown' %>
+        <strong class="metric-word <%= !isWeatherFresh || isStorm ? 'text-red' : 'text-green' %>">
+            <%= !hasTelemetry
+                ? 'Unknown'
+                : isWeatherFresh
+                    ? (weather.weather_event || 'Unknown')
+                    : 'Stale data' %>
         </strong>
-        <span class="metric-note">Mode <%= weather.weather_mode %></span>
+        <span class="metric-note">
+            <%= isWeatherFresh ? `Mode ${weather.weather_mode}` : 'Waiting for live report' %>
+        </span>
     </article>
 
-    <article class="metric-card weather-cycle-card <%= isNightCycle ? 'night' : 'day' %>">
+    <article class="metric-card weather-cycle-card <%= isNightCycle ? 'night' : 'day' %> <%= isStorm ? 'storm' : '' %> phase-<%= timePhase %>">
         <div class="weather-sky" aria-hidden="true">
+            <span class="weather-horizon"></span>
             <span class="weather-star star-one"></span>
             <span class="weather-star star-two"></span>
             <span class="weather-star star-three"></span>
-            <span class="weather-orb <%= isNightCycle ? 'moon' : 'sun' %>"></span>
+            <% if (weatherIcon === 'storm') { %>
+                <span class="weather-storm-icon">
+                    <span class="storm-cloud"></span>
+                    <span class="storm-funnel"></span>
+                </span>
+            <% } else { %>
+                <span class="weather-orb <%= weatherIcon %>"></span>
+            <% } %>
         </div>
         <div class="weather-cycle-copy">
-            <span class="metric-label">Daylight cycle</span>
-            <strong class="metric-word"><%= weather.isNight || 'Unknown' %></strong>
-            <span class="metric-note"><%= weather.timeOfDay || 'Cycle position unavailable' %></span>
+            <span class="metric-label">Time of day</span>
+            <strong class="metric-word"><%= weather.timeOfDay || 'Unknown' %></strong>
+            <span class="metric-note"><%= weather.isNight || 'Cycle unavailable' %></span>
         </div>
     </article>
 
@@ -65,6 +120,165 @@
         <span class="metric-label">Outside pressure</span>
         <strong><%= weather.outsidePressure || '0.0 kPa' %></strong>
         <span class="metric-note">External atmosphere</span>
+    </article>
+</section>
+
+<section class="weather-visual-grid">
+    <article class="panel weather-visual-card solar-navigation-card">
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">Solar navigation</p>
+                <h2>Solar compass</h2>
+            </div>
+            <span><%= solarBearing.toFixed(1) %>&deg; bearing</span>
+        </div>
+
+        <div class="solar-navigation-visual">
+            <div class="solar-compass" style="--solar-bearing: <%= solarBearing %>deg;">
+                <span class="compass-point north">N</span>
+                <span class="compass-point east">E</span>
+                <span class="compass-point south">S</span>
+                <span class="compass-point west">W</span>
+                <span class="compass-ring"></span>
+                <span class="solar-compass-needle"></span>
+                <span class="solar-compass-core"></span>
+            </div>
+
+            <div class="solar-elevation">
+                <span class="metric-label">Solar elevation</span>
+                <div class="elevation-track">
+                    <span
+                        class="elevation-marker"
+                        style="bottom: <%= elevationPercent %>%"
+                    ></span>
+                </div>
+                <strong><%= solarElevation.toFixed(1) %>&deg;</strong>
+                <small>Vertical sensor angle</small>
+            </div>
+        </div>
+    </article>
+
+    <article class="panel weather-visual-card sun-path-card">
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">Planetary cycle</p>
+                <h2>Solar path</h2>
+            </div>
+            <span><%= cyclePercent.toFixed(1) %>% complete</span>
+        </div>
+
+        <div
+            class="sun-path"
+            style="--sun-path-x: <%= sunPathX %>%; --sun-path-y: <%= sunPathY %>%;"
+        >
+            <svg
+                class="sun-path-arc"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+            >
+                <path d="M 8 82 A 42 64 0 0 1 92 82"></path>
+            </svg>
+            <span class="sun-path-marker <%= isNightCycle ? 'night' : 'day' %>"></span>
+            <span class="sun-path-label sunrise">Sunrise</span>
+            <span class="sun-path-label noon">Noon</span>
+            <span class="sun-path-label sunset">Sunset</span>
+        </div>
+        <strong class="weather-visual-value"><%= weather.timeOfDay || 'Unknown' %></strong>
+        <span class="metric-note"><%= weather.isNight || 'Cycle unavailable' %></span>
+    </article>
+
+    <article class="panel weather-visual-card storm-timeline-card <%= isStorm ? 'active' : '' %>">
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">Forecast</p>
+                <h2>Storm timeline</h2>
+            </div>
+            <span><%= isStorm ? 'Event active' : 'Next event' %></span>
+        </div>
+
+        <div class="storm-timeline-visual">
+            <span class="storm-timeline-cloud"></span>
+            <strong>
+                <%= !isWeatherFresh
+                    ? 'Live report required'
+                    : isStorm
+                        ? weather.weather_event
+                        : (weather.nextEvent || 'Unknown') %>
+            </strong>
+            <span>
+                <%= !isWeatherFresh
+                    ? 'Stored history is not used as a live forecast'
+                    : isStorm
+                        ? 'Shelter and secure external systems'
+                        : 'Until forecast weather event' %>
+            </span>
+        </div>
+        <div class="progress-track storm-progress">
+            <span
+                class="<%= isStorm ? 'red' : stormUrgency > 70 ? 'amber' : 'blue' %>"
+                style="width: <%= stormUrgency %>%"
+            ></span>
+        </div>
+    </article>
+
+    <article class="panel weather-visual-card solar-efficiency-card">
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">Solar availability</p>
+                <h2>Efficiency</h2>
+            </div>
+            <span><%= Number(weather.solarIrradiance || 0).toFixed(0) %> W/m&sup2;</span>
+        </div>
+
+        <div class="solar-efficiency-layout">
+            <div
+                class="solar-efficiency-gauge"
+                style="--solar-efficiency: <%= solarEfficiency * 3.6 %>deg;"
+            >
+                <div>
+                    <strong><%= solarEfficiency.toFixed(0) %>%</strong>
+                    <span>available</span>
+                </div>
+            </div>
+            <div class="solar-efficiency-status">
+                <strong>
+                    <%= weather.isEclipse
+                        ? 'Eclipse loss'
+                        : isStorm
+                            ? 'Storm loss'
+                            : solarEfficiency >= 75
+                                ? 'Strong output'
+                                : solarEfficiency >= 35
+                                    ? 'Reduced output'
+                                    : 'Low output' %>
+                </strong>
+                <span>Weather-adjusted solar ratio</span>
+            </div>
+        </div>
+    </article>
+
+    <article class="panel weather-visual-card planetary-clock-card">
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">Local cycle</p>
+                <h2>Planetary clock</h2>
+            </div>
+            <span>Day <%= weather.daysPast || 0 %></span>
+        </div>
+
+        <div class="planetary-clock" style="--clock-angle: <%= clockAngle %>deg;">
+            <span class="clock-half clock-day"></span>
+            <span class="clock-half clock-night"></span>
+            <span class="clock-hand"></span>
+            <span class="clock-core"></span>
+            <span class="clock-label clock-dawn">Dawn</span>
+            <span class="clock-label clock-noon">Noon</span>
+            <span class="clock-label clock-dusk">Dusk</span>
+            <span class="clock-label clock-midnight">Night</span>
+        </div>
+        <strong class="weather-visual-value"><%= weather.timeOfDay || 'Unknown' %></strong>
+        <span class="metric-note">Cycle length <%= weather.dayLengthSeconds || 'Unknown' %></span>
     </article>
 </section>
 
@@ -126,12 +340,16 @@
             </div>
             <div>
                 <dt>Next weather hash</dt>
-                <dd><%= weather.nextWeatherHash || 0 %></dd>
+                <dd><%= weather.nextWeatherHash == null ? 'Not reported' : weather.nextWeatherHash %></dd>
             </div>
             <div>
                 <dt>Weather sensor</dt>
-                <dd class="<%= weather.weather_error ? 'text-red' : 'text-green' %>">
-                    <%= weather.weather_error ? 'Error' : 'Operational' %>
+                <dd class="<%= weather.weather_error == null ? 'text-muted' : weather.weather_error ? 'text-red' : 'text-green' %>">
+                    <%= weather.weather_error == null
+                        ? 'Not reported'
+                        : weather.weather_error
+                            ? 'Error'
+                            : 'Operational' %>
                 </dd>
             </div>
         </dl>

@@ -28,7 +28,10 @@ automation.
 - Day/night state and descriptive time-of-day periods
 - Solar horizontal and vertical angles
 - Eclipse and weather solar-ratio reporting
-- Animated sun or moon cycle card
+- Animated sun, storm, and moon cycle card
+- Solar compass and elevation display
+- Solar path and planetary clock visualizations
+- Storm countdown and solar-efficiency gauges
 - Weather-driven night and storm commands for room automation
 
 ### Room Monitoring
@@ -44,6 +47,7 @@ automation.
 - Live wind turbine output, wind speed, and turbine speed
 - Animated turbine with telemetry status
 - Multiple named battery banks
+- Separate pre-transformer generation and post-transformer station storage
 - Aggregate stored energy, capacity, and station charge percentage
 - Battery charge level, health, and online status
 - Charging, discharging, and idle state detection
@@ -54,6 +58,9 @@ automation.
 - Signed decimal and hexadecimal Stationeers hash lookup
 - Responsive dashboard and sidebar navigation
 - Structured request logging
+- Event timeline with persistent alert acknowledgement
+- Six-hour SVG trends for battery, solar, wind, and room pressure
+- Configurable battery, solar-drop, and room-pressure alert thresholds
 
 ## Architecture
 
@@ -113,9 +120,9 @@ http://127.0.0.1:5000
 
 Set `SERVER_PORT` to use a different port.
 
-Without `DATABASE_URL`, StationOS keeps the latest telemetry in memory and logs
-that history storage is disabled. This is sufficient for local development,
-but telemetry is cleared when the Node.js process stops.
+Without `DATABASE_URL`, StationOS keeps current state plus bounded telemetry and
+event history in memory. Trends and acknowledgement work for the current
+process, but all in-memory history is cleared when Node.js stops.
 
 ## Docker and TimescaleDB
 
@@ -134,7 +141,8 @@ docker compose ps
 docker compose logs -f app
 ```
 
-Telemetry history is stored in the `telemetry_events` hypertable. For example:
+Telemetry history is stored in the `telemetry_events` hypertable. Operational
+events and acknowledgement state are stored in `station_events`. For example:
 
 ```powershell
 docker compose exec timescaledb psql -U stationos -d stationos -c "SELECT source_type, source_id, recorded_at FROM telemetry_events ORDER BY recorded_at DESC LIMIT 20;"
@@ -142,7 +150,8 @@ docker compose exec timescaledb psql -U stationos -d stationos -c "SELECT source
 
 The named `timescaledb_data` volume keeps the database across container
 restarts. The SQL in `docker/timescaledb/init.sql` runs only when that volume is
-first created.
+first created. Application startup also creates the `station_events` table when
+needed, so existing volumes receive the event schema without being recreated.
 
 Closing Stationeers stops new telemetry but does not remove existing readings.
 Restarting the StationOS app container reloads the most recent readings from
@@ -158,10 +167,20 @@ Compose accepts these environment variables:
 | `POSTGRES_USER` | `stationos` | Database user |
 | `POSTGRES_PASSWORD` | `stationos` | Database password; change this in `.env` |
 | `DATABASE_POOL_SIZE` | `10` | Maximum application database connections |
+| `WEATHER_STALE_MS` | `15000` | Age before weather is marked stale |
+| `TELEMETRY_STALE_MS` | `15000` | Age before room, battery, or turbine telemetry is marked stale |
+| `BATTERY_LOW_PERCENT` | `25` | Battery percentage that triggers a low-charge event |
+| `SOLAR_DROP_PERCENT` | `60` | Reading-to-reading solar drop that triggers an event |
+| `ROOM_PRESSURE_MIN_KPA` | `80` | Lower safe room-pressure boundary |
+| `ROOM_PRESSURE_MAX_KPA` | `120` | Upper safe room-pressure boundary |
 
 For a native Node.js deployment with an existing TimescaleDB instance, set
 `DATABASE_URL` to a PostgreSQL connection string and ensure the schema from
 `docker/timescaledb/init.sql` has been applied.
+
+TimescaleDB stores history; it is not treated as the source of live weather.
+Restored weather older than `WEATHER_STALE_MS` is labelled stale, and the
+dashboard continues polling until a newer in-game report arrives.
 
 ### Intel Arc A380
 
@@ -195,6 +214,17 @@ views/        EJS pages and shared partials
 
 See [URLS.md](URLS.md) for the complete route and payload reference. See
 [Lua Code/README.md](<Lua Code/README.md>) for in-game script setup.
+
+## Testing
+
+Run the telemetry contract and operations tests with:
+
+```powershell
+npm test
+```
+
+The suite covers telemetry normalization, payload validation, event generation,
+acknowledgement, and in-memory trend history.
 
 ## Technology
 

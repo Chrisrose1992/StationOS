@@ -9,15 +9,35 @@ const {
     batteryStatus,
     chargeState,
 } = require('../helper/format_helper');
+const {
+    getInvalidNumericFields,
+    toBinaryFlag,
+    toFiniteNumber,
+} = require('../helper/telemetry_helper');
+const { detectBatteryEvents } = require('../helper/event_helper');
 
 function powerGeneration_windTurbine(req, res) {
     const data = req.body;
+    const invalidFields = getInvalidNumericFields(data, [
+        'powerOutput',
+        'windSpeed',
+        'turbineSpeed',
+    ]);
+
+    if (invalidFields.length > 0) {
+        return res.status(400).json({
+            success: false,
+            error: `Invalid numeric field(s): ${invalidFields.join(', ')}.`,
+        });
+    }
+
     const windTurbine = stationState.power_monitor.wind_turbine;
 
-    windTurbine.powerOutputRaw = Number(data.powerOutput || 0);
-    windTurbine.powerOutput = formatPower(data.powerOutput);
-    windTurbine.windSpeed = `${(Number(data.windSpeed) * 100).toFixed(1)}%`;
-    windTurbine.turbineSpeed = `${(Number(data.turbineSpeed) * 100).toFixed(1)}%`;
+    windTurbine.powerOutputRaw = toFiniteNumber(data.powerOutput);
+    windTurbine.powerOutput = formatPower(windTurbine.powerOutputRaw);
+    windTurbine.windSpeed = `${(toFiniteNumber(data.windSpeed) * 100).toFixed(1)}%`;
+    windTurbine.turbineSpeed = `${(toFiniteNumber(data.turbineSpeed) * 100).toFixed(1)}%`;
+    windTurbine.reportedFields = Object.keys(data);
     windTurbine.updatedAt = new Date().toISOString();
 
     recordTelemetry(
@@ -37,44 +57,83 @@ function updateBatteryState(batteryId, data) {
     }
 
     const battery = stationState.power_monitor.battery[batteryId];
+    const previous = { ...battery };
 
     const hasPreviousCharge = battery.updatedAt !== null;
     const previousCharge = battery.chargeRaw || 0;
-    const currentCharge = Number(data.charge || 0);
+    const currentCharge = toFiniteNumber(data.charge);
+    const requestedRole = String(data.bankRole || '').toLowerCase();
+    const inferredRole = batteryId.toLowerCase().includes('generation')
+        ? 'generation'
+        : battery.bankRole;
+    const bankRole = ['generation', 'station', 'storage'].includes(requestedRole)
+        ? requestedRole
+        : inferredRole;
+    const batteryCount = Math.max(0, Math.floor(toFiniteNumber(data.batteryCount)));
 
-    battery.battery_bank_location = data.batteryBankType || batteryId;
-    battery.count = Number(data.batteryCount || 0);
-    battery.status = batteryStatus(data.error, data.batteryCount);
+    battery.battery_bank_location = data.batteryBankType
+        || data.batteryLocation
+        || batteryId;
+    battery.bankRole = bankRole;
+    battery.count = batteryCount;
+    battery.status = batteryStatus(data.error, batteryCount);
     battery.chargeStatus = hasPreviousCharge
         ? chargeState(previousCharge, currentCharge)
         : "Idle";
     battery.chargeRaw = currentCharge;
-    battery.ratioRaw = Number(data.ratio || 0);
+    battery.ratioRaw = toFiniteNumber(data.ratio);
     battery.ratio = formatPercent(data.ratio);
     battery.level = batteryLevel(data.ratio);
     battery.charge = formatEnergy(data.charge);
-    battery.maximumRaw = Number(data.maximum || 0);
+    battery.maximumRaw = toFiniteNumber(data.maximum);
     battery.maximum = formatEnergy(data.maximum);
-    battery.powerActualRaw = Number(data.powerActual || 0);
+    battery.powerActualRaw = toFiniteNumber(data.powerActual);
     battery.powerActual = formatPower(data.powerActual);
-    battery.powerPotentialRaw = Number(data.powerPotential || 0);
+    battery.powerPotentialRaw = toFiniteNumber(data.powerPotential);
     battery.powerPotential = formatPower(data.powerPotential);
-    battery.energyDeficitRaw = Number(data.powerDelta || 0);
+    battery.energyDeficitRaw = toFiniteNumber(data.powerDelta);
     battery.energyDeficit = formatEnergyDeficit(data.powerDelta);
-    battery.charged = Number(data.batteryCharged) === 1;
-    battery.empty = Number(data.batteryEmpty) === 1;
-    battery.error = Number(data.error) === 1;
+    battery.charged = toBinaryFlag(data.batteryCharged);
+    battery.empty = toBinaryFlag(data.batteryEmpty);
+    battery.error = toBinaryFlag(data.error);
+    battery.reportedFields = Object.keys(data);
     battery.updatedAt = new Date().toISOString();
+    detectBatteryEvents(batteryId, previous, battery);
 
     return battery;
 }
 
 function powerGeneration_battery(req, res) {
     const batteryId = req.params.batteryId;
-    const battery = updateBatteryState(batteryId, req.body || {});
+    const data = req.body;
+    const invalidFields = getInvalidNumericFields(data, [
+        'batteryCount',
+        'ratio',
+        'charge',
+        'maximum',
+        'powerActual',
+        'powerPotential',
+        'powerDelta',
+        'batteryCharged',
+        'batteryEmpty',
+        'error',
+    ]);
+
+    if (invalidFields.length > 0) {
+        return res.status(400).json({
+            success: false,
+            error: `Invalid numeric field(s): ${invalidFields.join(', ')}.`,
+        });
+    }
+
+    const battery = updateBatteryState(batteryId, data);
     recordTelemetry('battery', batteryId, battery, battery.updatedAt);
 
     return res.status(200).json({ success: true, battery });
 }
 
-module.exports = { powerGeneration_windTurbine, powerGeneration_battery };
+module.exports = {
+    powerGeneration_battery,
+    powerGeneration_windTurbine,
+    updateBatteryState,
+};

@@ -1,10 +1,20 @@
 <%- include('partials/page-start') %>
 
-<section class="hero-panel room-hero" data-room-live data-room-id="<%= activeRoomId %>">
+<section
+    class="hero-panel room-hero"
+    data-room-live
+    data-room-id="<%= activeRoomId %>"
+    data-room-fresh="<%= roomIsFresh %>"
+>
     <div>
         <p class="eyebrow">Room telemetry</p>
         <h2 data-room-field="room"><%= room.room || activeRoomId %></h2>
-        <p>Live environmental, occupancy and lighting telemetry. <span class="live-status" data-live-status>Connecting...</span></p>
+        <p>
+            Live environmental, occupancy and lighting telemetry.
+            <span class="live-status <%= roomIsFresh ? 'connected' : 'warning' %>" data-live-status>
+                <%= roomIsFresh ? 'Live' : 'Telemetry stale' %>
+            </span>
+        </p>
     </div>
     <div class="room-hero-status">
         <span class="badge neutral" data-room-occupancy><%= room.occupied ? 'Occupied' : 'Unoccupied' %></span>
@@ -20,7 +30,7 @@
     </article>
     <article class="metric-card">
         <span class="metric-label">Temperature</span>
-        <strong><span data-room-field="temperature"><%= room.temperature %></span>&deg;C</strong>
+        <strong><span data-room-field="temperature"><%= room.temperature === null ? 'Not reported' : room.temperature %></span><span data-temperature-unit><% if (room.temperature !== null) { %>&deg;C<% } %></span></strong>
         <span class="metric-note">Current reading</span>
     </article>
     <article class="metric-card">

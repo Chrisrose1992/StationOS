@@ -1,4 +1,5 @@
 const { stationState } = require('./stationState_helper');
+const { isTelemetryFresh } = require('./telemetry_helper');
 
 const systemPages = {
     power: {
@@ -71,6 +72,7 @@ function getRooms() {
         id,
         name: roomData.room || id,
         hazard: Boolean(roomData.hazard),
+        isFresh: isTelemetryFresh(roomData.updatedAt),
     }));
 }
 
