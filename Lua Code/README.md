@@ -82,19 +82,25 @@ Device slots:
 
 ### `battery.lua`
 
-Posts battery-bank telemetry to `/api/battery/GenerationStorage` every five
-seconds. Change `GenerationStorage` in the URL and `batteryBankType` in the
-payload when creating another independently tracked bank.
+Posts generation-battery telemetry to `/api/battery/GenerationStorage` every
+five seconds. It batch-reads all connected large batteries, so keep its IC
+network limited to the generation bank before the transformer.
 
-The script batch-reads every large station battery and reports:
+### `stationBattery.lua`
+
+Posts station-battery telemetry to `/api/battery/StationStorage` every five
+seconds. Run it in a second IC housing and assign the station battery directly
+to device slot 0.
+
+Both battery scripts report:
 
 - Battery count
-- Average charge ratio
-- Total stored charge and maximum capacity
+- Charge ratio
+- Stored charge and maximum capacity
 - Actual and potential power
 - Charged, empty, and error states
 
-Logic reader slots:
+`battery.lua` logic-reader slots:
 
 | Slot | Reading |
 | --- | --- |
@@ -102,8 +108,28 @@ Logic reader slots:
 | 1 | Battery charged state |
 | 2 | Battery empty state |
 
+`stationBattery.lua` device slots:
+
+| Slot | Device or reading |
+| --- | --- |
+| 0 | Station battery |
+| 1 | Logic reader: energy or power deficit |
+| 2 | Logic reader: battery charged state |
+| 3 | Logic reader: battery empty state |
+
 StationOS compares each total charge reading with the previous report to show
 whether the bank is charging, discharging, or idle.
+
+For the layout:
+
+```text
+Wind turbine -> generation battery -> transformer -> station battery
+```
+
+Use `battery.lua` before the transformer and `stationBattery.lua` after it.
+Do not point both scripts at the same battery. The dashboard uses the station
+battery for the headline station-charge percentage and combines both banks only
+for total stored energy and capacity.
 
 ## Setup
 

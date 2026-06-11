@@ -21,7 +21,7 @@ function tick(dt)
 
 		local data =
 			util.json.encode({
-				batteryBankType = "Generation Battery Storage",
+				batteryLocation = "Generation Storage",
 
 				batteryCount =
 				ic.batch_read(BATTERY_HASH, LT.On, LBM.Sum),
